@@ -1,0 +1,169 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  
+  "1_register_user": {
+    "method": "POST",
+    "url": "http://127.0.0.1:8000/api/accounts/register/",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "username": "john_doe",
+      "email": "john.doe@example.com",
+      "first_name": "John",
+      "last_name": "Doe",
+      "password": "SecurePass123!",
+      "password2": "SecurePass123!"
+    }
+  },
+  
+  "2_login": {
+    "method": "POST",
+    "url": "http://127.0.0.1:8000/api/accounts/login/",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "username": "john_doe",
+      "password": "SecurePass123!"
+    }
+  },
+  
+  "3_get_profile": {
+    "method": "GET",
+    "url": "http://127.0.0.1:8000/api/accounts/profile/",
+    "headers": {
+      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+      "Content-Type": "application/json"
+    },
+    "body": null
+  },
+  
+  "4_update_profile_only": {
+    "method": "PATCH",
+    "url": "http://127.0.0.1:8000/api/accounts/profile/update/",
+    "headers": {
+      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "first_name": "Johnny",
+      "last_name": "Smith",
+      "email": "johnny.smith@example.com"
+    }
+  },
+  
+  "5_update_password": {
+    "method": "PATCH",
+    "url": "http://127.0.0.1:8000/api/accounts/profile/update/",
+    "headers": {
+      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "current_password": "SecurePass123!",
+      "new_password": "NewSecurePass456!",
+      "confirm_password": "NewSecurePass456!"
+    }
+  },
+  
+  "6_update_profile_and_password": {
+    "method": "PATCH",
+    "url": "http://127.0.0.1:8000/api/accounts/profile/update/",
+    "headers": {
+      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "first_name": "Johnny",
+      "email": "johnny@example.com",
+      "current_password": "SecurePass123!",
+      "new_password": "NewSecurePass456!",
+      "confirm_password": "NewSecurePass456!"
+    }
+  },
+  
+  "7_logout": {
+    "method": "POST",
+    "url": "http://127.0.0.1:8000/api/accounts/logout/",
+    "headers": {
+      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+      "Content-Type": "application/json"
+    },
+    "body": {}
+  },
+  
+  "8_list_users_admin": {
+    "method": "GET",
+    "url": "http://127.0.0.1:8000/api/accounts/users/",
+    "headers": {
+      "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+      "Content-Type": "application/json"
+    },
+    "body": null
+  },
+  
+  "test_users": {
+    "user1": {
+      "username": "testuser1",
+      "email": "testuser1@example.com",
+      "first_name": "Test",
+      "last_name": "User1",
+      "password": "TestPass123!",
+      "password2": "TestPass123!"
+    },
+    "user2": {
+      "username": "testuser2",
+      "email": "testuser2@example.com",
+      "first_name": "Test",
+      "last_name": "User2",
+      "password": "TestPass123!",
+      "password2": "TestPass123!"
+    },
+    "user3": {
+      "username": "alice_wonder",
+      "email": "alice.wonder@example.com",
+      "first_name": "Alice",
+      "last_name": "Wonder",
+      "password": "AlicePass123!",
+      "password2": "AlicePass123!"
+    }
+  },
+  
+  "error_test_cases": {
+    "register_password_mismatch": {
+      "username": "testuser",
+      "email": "test@example.com",
+      "first_name": "Test",
+      "last_name": "User",
+      "password": "TestPass123!",
+      "password2": "DifferentPass123!"
+    },
+    "register_duplicate_username": {
+      "username": "john_doe",
+      "email": "different@example.com",
+      "first_name": "Test",
+      "last_name": "User",
+      "password": "TestPass123!",
+      "password2": "TestPass123!"
+    },
+    "login_wrong_password": {
+      "username": "john_doe",
+      "password": "WrongPassword123!"
+    },
+    "login_missing_fields": {
+      "username": "john_doe"
+    },
+    "update_wrong_current_password": {
+      "current_password": "WrongPass123!",
+      "new_password": "NewPass123!",
+      "confirm_password": "NewPass123!"
+    },
+    "update_password_mismatch": {
+      "current_password": "SecurePass123!",
+      "new_password": "NewPass123!",
+      "confirm_password": "DifferentPass123!"
+    }
+  }
+}
+
