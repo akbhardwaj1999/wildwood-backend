@@ -170,3 +170,47 @@ SWAGGER_SETTINGS = {
         'patch'
     ],
 }
+
+
+
+# CORS Configuration for PythonAnywhere
+# Allow all origins for development/testing (restrict in production)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React dev server (local testing)
+    "http://127.0.0.1:3000",
+    "https://localhost:3000",  # HTTPS local testing
+]
+
+# For PythonAnywhere - allow all origins during development
+# Remove this in production and use CORS_ALLOWED_ORIGINS instead
+CORS_ALLOW_ALL_ORIGINS = True  # Set to False in production
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# CSRF Configuration for REST API
+# REST APIs don't need CSRF protection (using JWT instead)
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+]
