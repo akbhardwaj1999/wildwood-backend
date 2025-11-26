@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',  # CORS support for Next.js frontend
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS middleware (should be at top)
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -173,11 +175,13 @@ SWAGGER_SETTINGS = {
 
 
 
-# CORS Configuration for PythonAnywhere
+# CORS Configuration for Next.js Frontend
 # Allow all origins for development/testing (restrict in production)
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React dev server (local testing)
+    "http://localhost:3000",  # Next.js default port
     "http://127.0.0.1:3000",
+    "http://localhost:3001",  # Alternative Next.js port
+    "http://127.0.0.1:3001",
     "https://localhost:3000",  # HTTPS local testing
 ]
 
@@ -213,4 +217,6 @@ CORS_ALLOW_HEADERS = [
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
 ]

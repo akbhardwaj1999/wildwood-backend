@@ -6,6 +6,7 @@ drf-yasg==1.21.11
 
 # Django Extensions
 django-mptt==0.18.0
+django-cors-headers==4.9.0
 
 # Image Processing
 Pillow==12.0.0
