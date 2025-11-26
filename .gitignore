@@ -30,6 +30,10 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Media files (uploaded by users)
+media/
+products/
+
 
 # Environment variables
 .env

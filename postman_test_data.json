@@ -1,169 +1,329 @@
 {
   "base_url": "http://127.0.0.1:8000",
   
-  "1_register_user": {
-    "method": "POST",
-    "url": "http://127.0.0.1:8000/api/accounts/register/",
-    "headers": {
-      "Content-Type": "application/json"
+  "accounts_apis": {
+    "1_register_user": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/accounts/register/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "username": "john_doe",
+        "email": "john.doe@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "password": "SecurePass123!",
+        "password2": "SecurePass123!"
+      }
     },
-    "body": {
-      "username": "john_doe",
-      "email": "john.doe@example.com",
-      "first_name": "John",
-      "last_name": "Doe",
-      "password": "SecurePass123!",
-      "password2": "SecurePass123!"
+    
+    "2_login": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/accounts/login/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "username": "demo_user1",
+        "password": "DemoPass123!"
+      }
+    },
+    
+    "3_get_profile": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/accounts/profile/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "4_update_profile": {
+      "method": "PATCH",
+      "url": "http://127.0.0.1:8000/api/accounts/profile/update/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "first_name": "Johnny",
+        "last_name": "Smith",
+        "email": "johnny.smith@example.com"
+      }
+    },
+    
+    "5_update_password": {
+      "method": "PATCH",
+      "url": "http://127.0.0.1:8000/api/accounts/profile/update/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "current_password": "SecurePass123!",
+        "new_password": "NewSecurePass456!",
+        "confirm_password": "NewSecurePass456!"
+      }
+    },
+    
+    "6_logout": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/accounts/logout/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {}
+    },
+    
+    "7_list_users_admin": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/accounts/users/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null
     }
   },
   
-  "2_login": {
-    "method": "POST",
-    "url": "http://127.0.0.1:8000/api/accounts/login/",
-    "headers": {
-      "Content-Type": "application/json"
+  "galleryitem_apis": {
+    "1_list_categories": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/categories/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
     },
-    "body": {
-      "username": "john_doe",
-      "password": "SecurePass123!"
+    
+    "2_get_category_detail": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/categories/1/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "3_list_gallery_items": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/items/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "4_list_gallery_items_filtered": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/items/?category=1&search=wooden&ordering=-timeStamp",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "5_get_gallery_item_detail": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/items/1/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "6_get_gallery_item_by_slug": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/items/slug/german-shepherd-statue-or-sculpture/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "7_create_gallery_item_admin": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/gallery/items/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "category": 1,
+        "title": "Premium Gaming Laptop",
+        "description": "High-performance gaming laptop with latest GPU and CPU.",
+        "active": true,
+        "metaKeyWords": "gaming laptop, high performance, GPU, CPU",
+        "metaKeyDescription": "Premium gaming laptop with latest technology"
+      }
+    },
+    
+    "8_update_gallery_item_admin": {
+      "method": "PATCH",
+      "url": "http://127.0.0.1:8000/api/gallery/items/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "title": "Updated Premium Gaming Laptop",
+        "description": "Updated description with new features"
+      }
+    },
+    
+    "9_delete_gallery_item_admin": {
+      "method": "DELETE",
+      "url": "http://127.0.0.1:8000/api/gallery/items/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "10_list_variants": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/variants/?product=1",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "11_get_variant_detail": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/variants/1/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "12_create_variant_admin": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/gallery/variants/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "product": 1,
+        "title": "32GB RAM, 1TB SSD",
+        "price": "1299.99",
+        "quantity": 25,
+        "is_best_seller": false,
+        "active": true
+      }
+    },
+    
+    "13_list_reviews": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/reviews/?product=1",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "14_create_review": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/gallery/reviews/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "product": 1,
+        "content": "This is an amazing product! Highly recommended!",
+        "rating": 5,
+        "keep_anonymous": false
+      }
+    },
+    
+    "15_get_wishlist": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/gallery/wishlist/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "16_add_to_wishlist": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/gallery/wishlist/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "product_id": 1
+      }
+    },
+    
+    "17_remove_from_wishlist": {
+      "method": "DELETE",
+      "url": "http://127.0.0.1:8000/api/gallery/wishlist/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null
     }
   },
   
-  "3_get_profile": {
-    "method": "GET",
-    "url": "http://127.0.0.1:8000/api/accounts/profile/",
-    "headers": {
-      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
-      "Content-Type": "application/json"
-    },
-    "body": null
-  },
-  
-  "4_update_profile_only": {
-    "method": "PATCH",
-    "url": "http://127.0.0.1:8000/api/accounts/profile/update/",
-    "headers": {
-      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
-      "Content-Type": "application/json"
-    },
-    "body": {
-      "first_name": "Johnny",
-      "last_name": "Smith",
-      "email": "johnny.smith@example.com"
-    }
-  },
-  
-  "5_update_password": {
-    "method": "PATCH",
-    "url": "http://127.0.0.1:8000/api/accounts/profile/update/",
-    "headers": {
-      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
-      "Content-Type": "application/json"
-    },
-    "body": {
-      "current_password": "SecurePass123!",
-      "new_password": "NewSecurePass456!",
-      "confirm_password": "NewSecurePass456!"
-    }
-  },
-  
-  "6_update_profile_and_password": {
-    "method": "PATCH",
-    "url": "http://127.0.0.1:8000/api/accounts/profile/update/",
-    "headers": {
-      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
-      "Content-Type": "application/json"
-    },
-    "body": {
-      "first_name": "Johnny",
-      "email": "johnny@example.com",
-      "current_password": "SecurePass123!",
-      "new_password": "NewSecurePass456!",
-      "confirm_password": "NewSecurePass456!"
-    }
-  },
-  
-  "7_logout": {
-    "method": "POST",
-    "url": "http://127.0.0.1:8000/api/accounts/logout/",
-    "headers": {
-      "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
-      "Content-Type": "application/json"
-    },
-    "body": {}
-  },
-  
-  "8_list_users_admin": {
-    "method": "GET",
-    "url": "http://127.0.0.1:8000/api/accounts/users/",
-    "headers": {
-      "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
-      "Content-Type": "application/json"
-    },
-    "body": null
-  },
-  
-  "test_users": {
+  "demo_users": {
     "user1": {
-      "username": "testuser1",
-      "email": "testuser1@example.com",
-      "first_name": "Test",
-      "last_name": "User1",
-      "password": "TestPass123!",
-      "password2": "TestPass123!"
+      "username": "demo_user1",
+      "email": "demo1@example.com",
+      "password": "DemoPass123!"
     },
     "user2": {
-      "username": "testuser2",
-      "email": "testuser2@example.com",
-      "first_name": "Test",
-      "last_name": "User2",
-      "password": "TestPass123!",
-      "password2": "TestPass123!"
+      "username": "demo_user2",
+      "email": "demo2@example.com",
+      "password": "DemoPass123!"
     },
     "user3": {
-      "username": "alice_wonder",
-      "email": "alice.wonder@example.com",
-      "first_name": "Alice",
-      "last_name": "Wonder",
-      "password": "AlicePass123!",
-      "password2": "AlicePass123!"
+      "username": "demo_user3",
+      "email": "demo3@example.com",
+      "password": "DemoPass123!"
     }
   },
   
-  "error_test_cases": {
-    "register_password_mismatch": {
-      "username": "testuser",
-      "email": "test@example.com",
-      "first_name": "Test",
-      "last_name": "User",
-      "password": "TestPass123!",
-      "password2": "DifferentPass123!"
+  "test_data_samples": {
+    "gallery_item_create": {
+      "category": 1,
+      "title": "Wireless Bluetooth Headphones",
+      "description": "Premium wireless headphones with noise cancellation.",
+      "active": true,
+      "metaKeyWords": "headphones, wireless, bluetooth",
+      "metaKeyDescription": "Premium wireless Bluetooth headphones"
     },
-    "register_duplicate_username": {
-      "username": "john_doe",
-      "email": "different@example.com",
-      "first_name": "Test",
-      "last_name": "User",
-      "password": "TestPass123!",
-      "password2": "TestPass123!"
+    "variant_create": {
+      "product": 1,
+      "title": "Black Color, Premium Edition",
+      "price": "199.99",
+      "quantity": 50,
+      "is_best_seller": true,
+      "active": true
     },
-    "login_wrong_password": {
-      "username": "john_doe",
-      "password": "WrongPassword123!"
-    },
-    "login_missing_fields": {
-      "username": "john_doe"
-    },
-    "update_wrong_current_password": {
-      "current_password": "WrongPass123!",
-      "new_password": "NewPass123!",
-      "confirm_password": "NewPass123!"
-    },
-    "update_password_mismatch": {
-      "current_password": "SecurePass123!",
-      "new_password": "NewPass123!",
-      "confirm_password": "DifferentPass123!"
+    "review_create": {
+      "product": 1,
+      "content": "Excellent product! Quality is outstanding.",
+      "rating": 5,
+      "keep_anonymous": false
     }
+  },
+  
+  "notes": {
+    "authentication": "Get token from /api/accounts/login/ or /api/accounts/register/",
+    "admin_apis": "Admin APIs require user with is_staff=True and is_superuser=True",
+    "pagination": "Pagination removed - all list APIs return arrays directly",
+    "public_apis": "GET requests for products, categories, variants, reviews don't need token",
+    "token_validity": "Access tokens are valid for 30 days"
   }
 }
-
