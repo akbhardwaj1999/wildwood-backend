@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -48,3 +50,9 @@ urlpatterns = [
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
+
+# Serve media files during development
+# In production, serve media files using a web server (nginx, Apache, etc.)
+if settings.DEBUG:
+    # Serve files from products/ folder when URL starts with /products/
+    urlpatterns += static('/products/', document_root=settings.BASE_DIR / 'products')

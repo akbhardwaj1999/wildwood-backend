@@ -124,6 +124,13 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files (User uploaded files, Product images)
+# https://docs.djangoproject.com/en/5.2/topics/files/
+# Database stores paths like 'products/images/small/...'
+# MEDIA_URL = '/' ensures URLs are like '/products/images/small/...'
+MEDIA_URL = '/'  # Leading slash for absolute URLs
+MEDIA_ROOT = BASE_DIR  # Root directory (images are in products/ subfolder)
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
