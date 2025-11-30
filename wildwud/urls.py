@@ -37,6 +37,7 @@ schema_view = get_schema_view(
    patterns=[
       path('api/accounts/', include('accounts.urls')),
       path('api/gallery/', include('galleryItem.urls')),
+      path('api/cart/', include('cart.api_urls')),
    ],
 )
 
@@ -44,6 +45,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/gallery/', include('galleryItem.urls')),
+    path('api/cart/', include('cart.api_urls')),
     
     # Swagger Documentation URLs
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),

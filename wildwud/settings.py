@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'mptt',  # Required for Category model
     'accounts',
     'galleryItem',
+    'cart',
 ]
 
 MIDDLEWARE = [
