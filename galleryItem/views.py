@@ -96,7 +96,12 @@ class GalleryItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = GalleryItem.objects.all().select_related(
         'category', 'default_variant', 'google_product_category'
-    ).prefetch_related('variant_set', 'reviews')
+    ).prefetch_related(
+        'variant_set__variantimage_set',
+        'variant_set__variantvideo_set',
+        'variant_set__variantyoutubevideo_set',
+        'reviews'
+    )
     lookup_field = 'pk'
     
     def get_serializer_class(self):
@@ -179,7 +184,12 @@ class GalleryItemBySlugView(generics.RetrieveAPIView):
     """
     queryset = GalleryItem.objects.filter(active=True).select_related(
         'category', 'default_variant', 'google_product_category'
-    ).prefetch_related('variant_set', 'reviews')
+    ).prefetch_related(
+        'variant_set__variantimage_set',
+        'variant_set__variantvideo_set',
+        'variant_set__variantyoutubevideo_set',
+        'reviews'
+    )
     serializer_class = GalleryItemDetailSerializer
     lookup_field = 'slug'
     permission_classes = [permissions.AllowAny]

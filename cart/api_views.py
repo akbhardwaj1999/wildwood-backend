@@ -35,7 +35,28 @@ class CartView(generics.RetrieveAPIView):
     
     def get_object(self):
         """Get or create cart for current user/session"""
+        from django.db.models import Prefetch
+        from django.conf import settings
+        
+        # Debug: Log session info
+        session_key = self.request.session.session_key
+        order_id = self.request.session.get('order_id', None)
+        print(f"DEBUG CartView - Session key: {session_key}, Order ID from session: {order_id}")
+        
         order = get_or_set_order_session(self.request)
+        
+        # Ensure session is saved
+        self.request.session['order_id'] = order.id
+        self.request.session.modified = True
+        self.request.session.save()
+        
+        # Prefetch items with related variant and product data
+        order = Order.objects.prefetch_related(
+            Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
+        ).get(id=order.id)
+        
+        print(f"DEBUG CartView - Order ID: {order.id}, Items count: {order.items.count()}")
+        
         return order
     
     @swagger_auto_schema(
@@ -46,7 +67,23 @@ class CartView(generics.RetrieveAPIView):
         tags=['Cart']
     )
     def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+        response = super().get(request, *args, **kwargs)
+        
+        # Explicitly set session cookie in response
+        from django.conf import settings
+        if request.session.session_key:
+            response.set_cookie(
+                settings.SESSION_COOKIE_NAME,
+                request.session.session_key,
+                max_age=settings.SESSION_COOKIE_AGE,
+                domain=settings.SESSION_COOKIE_DOMAIN,
+                path=settings.SESSION_COOKIE_PATH,
+                secure=settings.SESSION_COOKIE_SECURE,
+                httponly=settings.SESSION_COOKIE_HTTPONLY,
+                samesite=settings.SESSION_COOKIE_SAMESITE,
+            )
+        
+        return response
 
 
 @swagger_auto_schema(
@@ -107,12 +144,42 @@ def add_to_cart(request):
         order.total_shipping_cost = 0
         order.save(update_fields=['total_shipping_cost'])
     
+    # IMPORTANT: Save session to ensure order_id is persisted
+    request.session['order_id'] = order.id
+    request.session.modified = True
+    request.session.save()
+    
+    # IMPORTANT: Refresh order from DB to get updated items
+    order.refresh_from_db()
+    
+    # Prefetch related items to ensure they're loaded
+    from django.db.models import Prefetch
+    order = Order.objects.prefetch_related(
+        Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
+    ).get(id=order.id)
+    
     # Return updated cart
     cart_serializer = OrderSerializer(order)
-    return Response({
+    response = Response({
         'message': 'Item added to cart successfully',
-        'cart': cart_serializer.data
+        'cart': cart_serializer.data,
+        'order_id': order.id  # Also return order_id for debugging
     }, status=status.HTTP_200_OK)
+    
+    # Explicitly set session cookie in response
+    from django.conf import settings
+    response.set_cookie(
+        settings.SESSION_COOKIE_NAME,
+        request.session.session_key,
+        max_age=settings.SESSION_COOKIE_AGE,
+        domain=settings.SESSION_COOKIE_DOMAIN,
+        path=settings.SESSION_COOKIE_PATH,
+        secure=settings.SESSION_COOKIE_SECURE,
+        httponly=settings.SESSION_COOKIE_HTTPONLY,
+        samesite=settings.SESSION_COOKIE_SAMESITE,
+    )
+    
+    return response
 
 
 @swagger_auto_schema(
@@ -156,10 +223,23 @@ def update_cart_item(request, item_id):
         order.total_shipping_cost = 0
         order.save(update_fields=['total_shipping_cost'])
     
+    # Save order_id to session
+    request.session['order_id'] = order.id
+    request.session.modified = True
+    request.session.save()
+    
+    # Refresh order to get updated items
+    order.refresh_from_db()
+    from django.db.models import Prefetch
+    order = Order.objects.prefetch_related(
+        Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
+    ).get(id=order.id)
+    
     cart_serializer = OrderSerializer(order)
     return Response({
         'message': 'Cart item updated successfully',
-        'cart': cart_serializer.data
+        'cart': cart_serializer.data,
+        'order_id': order.id
     }, status=status.HTTP_200_OK)
 
 
@@ -197,10 +277,23 @@ def remove_from_cart(request, item_id):
         order.total_shipping_cost = 0
         order.save(update_fields=['total_shipping_cost'])
     
+    # Save order_id to session
+    request.session['order_id'] = order.id
+    request.session.modified = True
+    request.session.save()
+    
+    # Refresh order to get updated items
+    order.refresh_from_db()
+    from django.db.models import Prefetch
+    order = Order.objects.prefetch_related(
+        Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
+    ).get(id=order.id)
+    
     cart_serializer = OrderSerializer(order)
     return Response({
         'message': 'Item removed from cart successfully',
-        'cart': cart_serializer.data
+        'cart': cart_serializer.data,
+        'order_id': order.id
     }, status=status.HTTP_200_OK)
 
 
@@ -225,8 +318,23 @@ def clear_cart(request):
     order.coupon = None
     order.save()
     
+    # Save order_id to session
+    request.session['order_id'] = order.id
+    request.session.modified = True
+    request.session.save()
+    
+    # Refresh order
+    order.refresh_from_db()
+    from django.db.models import Prefetch
+    order = Order.objects.prefetch_related(
+        Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
+    ).get(id=order.id)
+    
+    cart_serializer = OrderSerializer(order)
     return Response({
-        'message': 'Cart cleared successfully'
+        'message': 'Cart cleared successfully',
+        'cart': cart_serializer.data,
+        'order_id': order.id
     }, status=status.HTTP_200_OK)
 
 
@@ -449,11 +557,24 @@ def apply_coupon(request):
     # Mark coupon as applied in session to prevent get_or_set_order_session from clearing it
     request.session['coupon_applied_at'] = timezone.now().isoformat()
     
+    # Save order_id to session
+    request.session['order_id'] = order.id
+    request.session.modified = True
+    request.session.save()
+    
+    # Refresh order
+    order.refresh_from_db()
+    from django.db.models import Prefetch
+    order = Order.objects.prefetch_related(
+        Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
+    ).get(id=order.id)
+    
     cart_serializer = OrderSerializer(order)
     return Response({
         'message': 'Coupon applied successfully',
         'coupon_discount_amount': order.get_coupon_discount_amount(),
-        'cart': cart_serializer.data
+        'cart': cart_serializer.data,
+        'order_id': order.id
     }, status=status.HTTP_200_OK)
 
 
@@ -491,10 +612,23 @@ def remove_coupon(request):
     order.coupon = None
     order.save(update_fields=['coupon'])
     
+    # Save order_id to session
+    request.session['order_id'] = order.id
+    request.session.modified = True
+    request.session.save()
+    
+    # Refresh order
+    order.refresh_from_db()
+    from django.db.models import Prefetch
+    order = Order.objects.prefetch_related(
+        Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
+    ).get(id=order.id)
+    
     cart_serializer = OrderSerializer(order)
     return Response({
         'message': 'Coupon removed successfully',
-        'cart': cart_serializer.data
+        'cart': cart_serializer.data,
+        'order_id': order.id
     }, status=status.HTTP_200_OK)
 
 

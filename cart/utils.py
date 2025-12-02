@@ -23,11 +23,28 @@ def create_new_order():
 
 
 def get_or_set_order_session(request):
+    # Try to get order_id from session first
     order_id = request.session.get('order_id', None)
+    
+    # Fallback: Try to get order_id from custom header (for localStorage approach)
+    if order_id is None:
+        order_id_header = request.META.get('HTTP_X_ORDER_ID', None)
+        if order_id_header:
+            try:
+                order_id = int(order_id_header)
+                # Validate that order exists and is not finalized
+                order = Order.objects.get(id=order_id, ordered=False)
+                # Save to session for future requests
+                request.session['order_id'] = order.id
+                request.session.modified = True
+                return order
+            except (ValueError, Order.DoesNotExist):
+                pass
 
     if order_id is None:
         order = create_new_order()
         request.session['order_id'] = order.id
+        request.session.modified = True
 
     else:
         try:
@@ -35,6 +52,7 @@ def get_or_set_order_session(request):
         except Order.DoesNotExist:
             order = create_new_order()
             request.session['order_id'] = order.id
+            request.session.modified = True
 
     if request.user.is_authenticated and order.user is None:
         order.user = request.user

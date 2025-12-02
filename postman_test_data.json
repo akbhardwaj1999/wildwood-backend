@@ -276,6 +276,259 @@
     }
   },
   
+  "cart_apis": {
+    "1_get_cart": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/cart/cart/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "No authentication required - uses session-based cart"
+    },
+    
+    "2_add_item_to_cart": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/cart/cart/add-item/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "variant_id": 1,
+        "quantity": 2
+      },
+      "note": "No authentication required - uses session-based cart"
+    },
+    
+    "3_update_cart_item": {
+      "method": "PUT",
+      "url": "http://127.0.0.1:8000/api/cart/cart/update-item/1/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "quantity": 5
+      },
+      "note": "Replace 1 with actual cart item ID from get_cart response"
+    },
+    
+    "4_remove_item_from_cart": {
+      "method": "DELETE",
+      "url": "http://127.0.0.1:8000/api/cart/cart/remove-item/1/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Replace 1 with actual cart item ID from get_cart response"
+    },
+    
+    "5_clear_cart": {
+      "method": "DELETE",
+      "url": "http://127.0.0.1:8000/api/cart/cart/clear/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null
+    },
+    
+    "6_list_addresses": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/cart/addresses/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Authentication required - returns user's addresses"
+    },
+    
+    "7_create_address": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/cart/addresses/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "first_name": "John",
+        "last_name": "Doe",
+        "email_address": "john.doe@example.com",
+        "phone_number": "1234567890",
+        "address_line_1": "123 Main Street",
+        "address_line_2": "Apt 4B",
+        "city": "New York",
+        "state": "NY",
+        "country": "United States",
+        "zip_code": "10001",
+        "address_type": "S",
+        "default": false
+      },
+      "note": "address_type: 'S' for Shipping, 'B' for Billing"
+    },
+    
+    "8_get_address_detail": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/cart/addresses/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Replace 1 with actual address ID"
+    },
+    
+    "9_update_address": {
+      "method": "PUT",
+      "url": "http://127.0.0.1:8000/api/cart/addresses/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "first_name": "John",
+        "last_name": "Doe",
+        "email_address": "john.doe@example.com",
+        "phone_number": "1234567890",
+        "address_line_1": "456 Updated Street",
+        "address_line_2": "Suite 200",
+        "city": "Los Angeles",
+        "state": "CA",
+        "country": "United States",
+        "zip_code": "90001",
+        "address_type": "S",
+        "default": true
+      },
+      "note": "Replace 1 with actual address ID"
+    },
+    
+    "10_delete_address": {
+      "method": "DELETE",
+      "url": "http://127.0.0.1:8000/api/cart/addresses/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Replace 1 with actual address ID"
+    },
+    
+    "11_list_orders": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/cart/orders/",
+      "headers": {
+        "Authorization": "Bearer PASTE_YOUR_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Returns all finalized orders for authenticated user"
+    },
+    
+    "12_get_order_detail": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/cart/orders/ORDER-REF-12345/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Replace ORDER-REF-12345 with actual order reference_number. No auth required for public access by reference"
+    },
+    
+    "13_apply_coupon": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/cart/coupons/apply/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "code": "SAVE10"
+      },
+      "note": "No authentication required - uses session-based cart"
+    },
+    
+    "14_remove_coupon": {
+      "method": "DELETE",
+      "url": "http://127.0.0.1:8000/api/cart/coupons/remove/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "No authentication required - uses session-based cart"
+    },
+    
+    "15_list_coupons_admin": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/cart/admin/coupons/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Admin only - list all coupons"
+    },
+    
+    "16_create_coupon_admin": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/cart/admin/coupons/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "title": "10% Off Coupon",
+        "description": "Get 10% off on orders above $100",
+        "code": "SAVE10",
+        "discount": "10.00",
+        "discount_type": "percentage",
+        "minimum_order_amount": "100.00",
+        "single_use_per_user": false,
+        "active": true
+      },
+      "note": "Admin only - discount_type: 'fixed_amount' or 'percentage'"
+    },
+    
+    "17_get_coupon_detail_admin": {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/cart/admin/coupons/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Admin only - replace 1 with coupon ID"
+    },
+    
+    "18_update_coupon_admin": {
+      "method": "PUT",
+      "url": "http://127.0.0.1:8000/api/cart/admin/coupons/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "title": "Updated 10% Off Coupon",
+        "description": "Updated description",
+        "code": "SAVE10",
+        "discount": "15.00",
+        "discount_type": "percentage",
+        "minimum_order_amount": "100.00",
+        "single_use_per_user": false,
+        "active": true
+      },
+      "note": "Admin only - replace 1 with coupon ID"
+    },
+    
+    "19_delete_coupon_admin": {
+      "method": "DELETE",
+      "url": "http://127.0.0.1:8000/api/cart/admin/coupons/1/",
+      "headers": {
+        "Authorization": "Bearer PASTE_ADMIN_ACCESS_TOKEN_HERE",
+        "Content-Type": "application/json"
+      },
+      "body": null,
+      "note": "Admin only - replace 1 with coupon ID"
+    }
+  },
+  
   "demo_users": {
     "user1": {
       "username": "demo_user1",
@@ -316,6 +569,34 @@
       "content": "Excellent product! Quality is outstanding.",
       "rating": 5,
       "keep_anonymous": false
+    },
+    "add_to_cart": {
+      "variant_id": 1,
+      "quantity": 2
+    },
+    "address_create": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email_address": "john.doe@example.com",
+      "phone_number": "1234567890",
+      "address_line_1": "123 Main Street",
+      "address_line_2": "Apt 4B",
+      "city": "New York",
+      "state": "NY",
+      "country": "United States",
+      "zip_code": "10001",
+      "address_type": "S",
+      "default": false
+    },
+    "coupon_create_admin": {
+      "title": "10% Off Coupon",
+      "description": "Get 10% off on orders above $100",
+      "code": "SAVE10",
+      "discount": "10.00",
+      "discount_type": "percentage",
+      "minimum_order_amount": "100.00",
+      "single_use_per_user": false,
+      "active": true
     }
   },
   
@@ -324,6 +605,10 @@
     "admin_apis": "Admin APIs require user with is_staff=True and is_superuser=True",
     "pagination": "Pagination removed - all list APIs return arrays directly",
     "public_apis": "GET requests for products, categories, variants, reviews don't need token",
-    "token_validity": "Access tokens are valid for 30 days"
+    "token_validity": "Access tokens are valid for 30 days",
+    "cart_apis": "Cart APIs use session-based cart - no authentication required for basic cart operations. Address and Order history APIs require authentication.",
+    "cart_session": "Cart is stored in session, so same browser/session will maintain cart across requests",
+    "address_types": "Address type: 'S' for Shipping, 'B' for Billing",
+    "coupon_types": "Coupon discount_type: 'fixed_amount' or 'percentage'"
   }
 }

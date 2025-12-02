@@ -587,5 +587,600 @@ You can also test APIs directly in Swagger UI:
 
 ---
 
+## 🛒 Cart APIs
+
+Cart APIs allow users to manage their shopping cart, addresses, orders, and coupons.
+
+### Important Notes:
+- **Session-based Cart**: Cart operations use session-based cart, so no authentication is required for basic cart operations (add, update, remove items)
+- **Address & Orders**: Address management and order history require authentication
+- **Cart Persistence**: Cart is stored in session, so same browser/session maintains cart across requests
+
+---
+
+### 1. Cart Operations
+
+#### 1.1 Get Current Cart
+**GET** `/api/cart/cart/`
+
+**Description**: Get current user's cart with all items, pricing, and totals.
+
+**Authentication**: Not required (uses session)
+
+**Request**:
+```http
+GET http://127.0.0.1:8000/api/cart/cart/
+Content-Type: application/json
+```
+
+**Response** (200 OK):
+```json
+{
+  "id": 1,
+  "reference_number": "2025-11-27-12345678",
+  "items": [
+    {
+      "id": 1,
+      "variant": {
+        "id": 1,
+        "title": "32GB RAM, 1TB SSD",
+        "price": "1299.99",
+        "image": "/products/images/small/product_1_img_0.jpg"
+      },
+      "quantity": 2,
+      "item_price": "1299.99",
+      "total_item_price": "2599.98",
+      "product_title": "Premium Gaming Laptop",
+      "variant_title": "32GB RAM, 1TB SSD"
+    }
+  ],
+  "subtotal": "2599.98",
+  "coupon_discount_amount": "0.00",
+  "total": "2599.98",
+  "total_shipping_cost": "0.00",
+  "tax_amount": "0.00",
+  "ordered": false,
+  "status": "N"
+}
+```
+
+---
+
+#### 1.2 Add Item to Cart
+**POST** `/api/cart/cart/add-item/`
+
+**Description**: Add item to cart. If item already exists, increases quantity.
+
+**Authentication**: Not required (uses session)
+
+**Request**:
+```http
+POST http://127.0.0.1:8000/api/cart/cart/add-item/
+Content-Type: application/json
+
+{
+  "variant_id": 1,
+  "quantity": 2
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "message": "Item added to cart successfully",
+  "cart": {
+    "id": 1,
+    "items": [...],
+    "subtotal": "2599.98",
+    "total": "2599.98"
+  }
+}
+```
+
+**Error Response** (400 Bad Request):
+```json
+{
+  "variant_id": ["This variant is out of stock"]
+}
+```
+
+---
+
+#### 1.3 Update Cart Item Quantity
+**PUT** `/api/cart/cart/update-item/<item_id>/`
+
+**Description**: Update cart item quantity.
+
+**Authentication**: Not required (uses session)
+
+**Request**:
+```http
+PUT http://127.0.0.1:8000/api/cart/cart/update-item/1/
+Content-Type: application/json
+
+{
+  "quantity": 5
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "message": "Cart item updated successfully",
+  "cart": {
+    "id": 1,
+    "items": [...],
+    "subtotal": "6499.95",
+    "total": "6499.95"
+  }
+}
+```
+
+---
+
+#### 1.4 Remove Item from Cart
+**DELETE** `/api/cart/cart/remove-item/<item_id>/`
+
+**Description**: Remove item from cart.
+
+**Authentication**: Not required (uses session)
+
+**Request**:
+```http
+DELETE http://127.0.0.1:8000/api/cart/cart/remove-item/1/
+```
+
+**Response** (200 OK):
+```json
+{
+  "message": "Item removed from cart successfully",
+  "cart": {
+    "id": 1,
+    "items": [],
+    "subtotal": "0.00",
+    "total": "0.00"
+  }
+}
+```
+
+---
+
+#### 1.5 Clear Entire Cart
+**DELETE** `/api/cart/cart/clear/`
+
+**Description**: Clear entire cart (remove all items).
+
+**Authentication**: Not required (uses session)
+
+**Request**:
+```http
+DELETE http://127.0.0.1:8000/api/cart/cart/clear/
+```
+
+**Response** (200 OK):
+```json
+{
+  "message": "Cart cleared successfully"
+}
+```
+
+---
+
+### 2. Address Management
+
+#### 2.1 List User Addresses
+**GET** `/api/cart/addresses/`
+
+**Description**: List all addresses for authenticated user.
+
+**Authentication**: Required
+
+**Request**:
+```http
+GET http://127.0.0.1:8000/api/cart/addresses/
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+**Response** (200 OK):
+```json
+[
+  {
+    "id": 1,
+    "first_name": "John",
+    "last_name": "Doe",
+    "email_address": "john.doe@example.com",
+    "phone_number": "1234567890",
+    "address_line_1": "123 Main Street",
+    "address_line_2": "Apt 4B",
+    "city": "New York",
+    "state": "NY",
+    "country": "United States",
+    "zip_code": "10001",
+    "address_type": "S",
+    "address_type_display": "Shipping",
+    "default": false
+  }
+]
+```
+
+---
+
+#### 2.2 Create Address
+**POST** `/api/cart/addresses/`
+
+**Description**: Create new address.
+
+**Authentication**: Required
+
+**Request**:
+```http
+POST http://127.0.0.1:8000/api/cart/addresses/
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email_address": "john.doe@example.com",
+  "phone_number": "1234567890",
+  "address_line_1": "123 Main Street",
+  "address_line_2": "Apt 4B",
+  "city": "New York",
+  "state": "NY",
+  "country": "United States",
+  "zip_code": "10001",
+  "address_type": "S",
+  "default": false
+}
+```
+
+**Note**: `address_type` - "S" for Shipping, "B" for Billing
+
+**Response** (201 Created):
+```json
+{
+  "id": 1,
+  "first_name": "John",
+  "last_name": "Doe",
+  ...
+}
+```
+
+---
+
+#### 2.3 Get Address Detail
+**GET** `/api/cart/addresses/<id>/`
+
+**Description**: Get address details.
+
+**Authentication**: Required (can only access own addresses)
+
+**Request**:
+```http
+GET http://127.0.0.1:8000/api/cart/addresses/1/
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**Response** (200 OK): Address object
+
+---
+
+#### 2.4 Update Address
+**PUT/PATCH** `/api/cart/addresses/<id>/`
+
+**Description**: Update address.
+
+**Authentication**: Required
+
+**Request**:
+```http
+PUT http://127.0.0.1:8000/api/cart/addresses/1/
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  ...
+}
+```
+
+**Response** (200 OK): Updated address object
+
+---
+
+#### 2.5 Delete Address
+**DELETE** `/api/cart/addresses/<id>/`
+
+**Description**: Delete address.
+
+**Authentication**: Required
+
+**Request**:
+```http
+DELETE http://127.0.0.1:8000/api/cart/addresses/1/
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**Response** (204 No Content)
+
+---
+
+### 3. Order Management
+
+#### 3.1 List User Orders
+**GET** `/api/cart/orders/`
+
+**Description**: List all finalized orders for authenticated user.
+
+**Authentication**: Required
+
+**Request**:
+```http
+GET http://127.0.0.1:8000/api/cart/orders/
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+**Response** (200 OK):
+```json
+[
+  {
+    "id": 1,
+    "reference_number": "2025-11-27-12345678",
+    "ordered_date": "2025-11-27T10:30:00Z",
+    "status": "O",
+    "status_display": "Not shipped yet",
+    "items": [...],
+    "subtotal": "2599.98",
+    "total": "2599.98",
+    "ordered": true
+  }
+]
+```
+
+---
+
+#### 3.2 Get Order Details
+**GET** `/api/cart/orders/<reference_number>/`
+
+**Description**: Get order details by reference number.
+
+**Authentication**: Not required (public access by reference number)
+
+**Request**:
+```http
+GET http://127.0.0.1:8000/api/cart/orders/2025-11-27-12345678/
+Content-Type: application/json
+```
+
+**Response** (200 OK): Complete order object with items, addresses, etc.
+
+---
+
+### 4. Coupon Operations
+
+#### 4.1 Apply Coupon
+**POST** `/api/cart/coupons/apply/`
+
+**Description**: Apply coupon to cart.
+
+**Authentication**: Not required (uses session)
+
+**Request**:
+```http
+POST http://127.0.0.1:8000/api/cart/coupons/apply/
+Content-Type: application/json
+
+{
+  "code": "SAVE10"
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "message": "Coupon applied successfully",
+  "coupon_discount_amount": "259.99",
+  "cart": {
+    "id": 1,
+    "coupon": 1,
+    "subtotal": "2599.98",
+    "total": "2339.99",
+    ...
+  }
+}
+```
+
+**Error Response** (400 Bad Request):
+```json
+{
+  "error": "Coupon code is invalid."
+}
+```
+
+---
+
+#### 4.2 Remove Coupon
+**DELETE** `/api/cart/coupons/remove/`
+
+**Description**: Remove coupon from cart.
+
+**Authentication**: Not required (uses session)
+
+**Request**:
+```http
+DELETE http://127.0.0.1:8000/api/cart/coupons/remove/
+```
+
+**Response** (200 OK):
+```json
+{
+  "message": "Coupon removed successfully",
+  "cart": {
+    "id": 1,
+    "coupon": null,
+    "subtotal": "2599.98",
+    "total": "2599.98",
+    ...
+  }
+}
+```
+
+---
+
+### 5. Admin Coupon Management
+
+#### 5.1 List All Coupons (Admin)
+**GET** `/api/cart/admin/coupons/`
+
+**Description**: List all coupons (Admin only).
+
+**Authentication**: Required (Admin)
+
+**Request**:
+```http
+GET http://127.0.0.1:8000/api/cart/admin/coupons/
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+**Response** (200 OK): Array of coupon objects
+
+---
+
+#### 5.2 Create Coupon (Admin)
+**POST** `/api/cart/admin/coupons/`
+
+**Description**: Create new coupon (Admin only).
+
+**Authentication**: Required (Admin)
+
+**Request**:
+```http
+POST http://127.0.0.1:8000/api/cart/admin/coupons/
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "title": "10% Off Coupon",
+  "description": "Get 10% off on orders above $100",
+  "code": "SAVE10",
+  "discount": "10.00",
+  "discount_type": "percentage",
+  "minimum_order_amount": "100.00",
+  "single_use_per_user": false,
+  "active": true
+}
+```
+
+**Note**: `discount_type` - "fixed_amount" or "percentage"
+
+**Response** (201 Created): Coupon object
+
+---
+
+#### 5.3 Get Coupon Detail (Admin)
+**GET** `/api/cart/admin/coupons/<id>/`
+
+**Description**: Get coupon details (Admin only).
+
+**Authentication**: Required (Admin)
+
+**Request**:
+```http
+GET http://127.0.0.1:8000/api/cart/admin/coupons/1/
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+**Response** (200 OK): Coupon object
+
+---
+
+#### 5.4 Update Coupon (Admin)
+**PUT/PATCH** `/api/cart/admin/coupons/<id>/`
+
+**Description**: Update coupon (Admin only).
+
+**Authentication**: Required (Admin)
+
+**Request**:
+```http
+PUT http://127.0.0.1:8000/api/cart/admin/coupons/1/
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "title": "Updated 10% Off Coupon",
+  "code": "SAVE10",
+  "discount": "15.00",
+  "discount_type": "percentage",
+  "minimum_order_amount": "100.00",
+  "single_use_per_user": false,
+  "active": true
+}
+```
+
+**Response** (200 OK): Updated coupon object
+
+---
+
+#### 5.5 Delete Coupon (Admin)
+**DELETE** `/api/cart/admin/coupons/<id>/`
+
+**Description**: Delete coupon (Admin only).
+
+**Authentication**: Required (Admin)
+
+**Request**:
+```http
+DELETE http://127.0.0.1:8000/api/cart/admin/coupons/1/
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+**Response** (204 No Content)
+
+---
+
+## 📝 Cart API Testing Workflow
+
+### Complete Shopping Flow:
+
+1. **Get Products** (Gallery APIs)
+   - `GET /api/gallery/items/` - Browse products
+   - `GET /api/gallery/variants/1/` - View variant details
+
+2. **Add to Cart**
+   - `POST /api/cart/cart/add-item/` - Add product to cart
+   - `GET /api/cart/cart/` - View cart
+
+3. **Manage Cart**
+   - `PUT /api/cart/cart/update-item/<id>/` - Update quantities
+   - `DELETE /api/cart/cart/remove-item/<id>/` - Remove items
+
+4. **Apply Coupon** (Optional)
+   - `POST /api/cart/coupons/apply/` - Apply discount code
+
+5. **Add Address** (If authenticated)
+   - `POST /api/cart/addresses/` - Add shipping address
+
+6. **View Orders** (If authenticated)
+   - `GET /api/cart/orders/` - View order history
+   - `GET /api/cart/orders/<reference>/` - View order details
+
+---
+
+## 🔑 Cart API Key Points
+
+1. **Session-based Cart**: Cart operations don't require authentication - cart is stored in session
+2. **Address Management**: Requires authentication - users can only manage their own addresses
+3. **Order History**: Requires authentication - users can only view their own orders
+4. **Coupon Application**: No authentication required - uses session cart
+5. **Admin Coupon Management**: Requires admin authentication
+6. **Cart Persistence**: Cart persists across requests in the same browser session
+
+---
+
 **Happy Testing!** 🚀
 

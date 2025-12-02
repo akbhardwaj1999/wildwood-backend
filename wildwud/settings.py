@@ -218,6 +218,7 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
+    'x-order-id',  # Custom header for cart order ID
 ]
 
 # CSRF Configuration for REST API
@@ -228,3 +229,14 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3001',
     'http://127.0.0.1:3001',
 ]
+
+# Session Configuration for Cross-Origin Requests
+# Required for session-based cart to work with Next.js frontend
+# For localhost development with different ports (3000 and 8000), we need 'None' with Secure=False
+# In production with HTTPS, use 'None' with Secure=True
+SESSION_COOKIE_SAMESITE = 'None'  # Allow cross-origin requests (required for different ports)
+SESSION_COOKIE_SECURE = False  # False for localhost HTTP, True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Security: prevent JavaScript access
+SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
+SESSION_COOKIE_AGE = 86400 * 7  # 7 days (default)
+SESSION_COOKIE_DOMAIN = None  # None means current domain (localhost)
