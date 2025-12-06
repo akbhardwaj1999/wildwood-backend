@@ -74,6 +74,7 @@ class OrderSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     subtotal = serializers.SerializerMethodField()
     coupon_discount_amount = serializers.SerializerMethodField()
+    coupon_code = serializers.SerializerMethodField()
     total = serializers.SerializerMethodField()
     user_email = serializers.EmailField(source='user.email', read_only=True)
     user_username = serializers.CharField(source='user.username', read_only=True)
@@ -84,13 +85,13 @@ class OrderSerializer(serializers.ModelSerializer):
             'id', 'user', 'user_email', 'user_username', 'reference_number',
             'start_date', 'last_updated', 'ordered_date', 'ordered', 'status',
             'status_display', 'billing_address', 'shipping_address',
-            'total_shipping_cost', 'coupon', 'tax_amount', 'wholesale_discount',
+            'total_shipping_cost', 'coupon', 'coupon_code', 'tax_amount', 'wholesale_discount',
             'is_tax_exempt', 'subtotal', 'coupon_discount_amount', 'total',
             'items', 'abandoned_email_sent', 'abandoned_email_count'
         )
         read_only_fields = (
             'id', 'reference_number', 'start_date', 'last_updated',
-            'ordered_date', 'subtotal', 'coupon_discount_amount', 'total'
+            'ordered_date', 'subtotal', 'coupon_discount_amount', 'total', 'coupon_code'
         )
 
     def get_subtotal(self, obj):
@@ -100,6 +101,12 @@ class OrderSerializer(serializers.ModelSerializer):
     def get_coupon_discount_amount(self, obj):
         """Get formatted coupon discount amount"""
         return obj.get_coupon_discount_amount()
+    
+    def get_coupon_code(self, obj):
+        """Get coupon code if coupon is applied"""
+        if obj.coupon:
+            return obj.coupon.code
+        return None
     
     def get_total(self, obj):
         """Get formatted total"""
@@ -123,9 +130,19 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = (
             'id', 'order', 'order_reference', 'payment_method', 'payment_method_display',
-            'timestamp', 'successful', 'amount', 'raw_response', 'reference_number'
+            'timestamp', 'successful', 'amount', 'raw_response', 'transaction_id', 'reference_number'
         )
         read_only_fields = ('id', 'timestamp', 'reference_number')
+
+
+class CreatePaymentSerializer(serializers.Serializer):
+    """Serializer for creating payment"""
+    payment_method = serializers.ChoiceField(choices=Payment.PAYMENT_CHOICES)
+    address_id = serializers.IntegerField(required=False, help_text="Address ID for shipping")
+    # For Stripe
+    stripe_token = serializers.CharField(required=False, allow_blank=True, help_text="Stripe payment token")
+    # For PayPal
+    paypal_order_id = serializers.CharField(required=False, allow_blank=True, help_text="PayPal order ID")
 
 
 class CouponSerializer(serializers.ModelSerializer):

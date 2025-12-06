@@ -58,15 +58,29 @@ def get_or_set_order_session(request):
         order.user = request.user
         order.save()
 
-        # If the session doesn't say a coupon was intentionally applied this session,
+    # Refresh order to get latest items count
+    order.refresh_from_db()
+    
+    # If the session doesn't say a coupon was intentionally applied this session,
     # make sure we don't carry over an old coupon on a reused, not-finalized order.
     if not request.session.get('coupon_applied_at'):
         if getattr(order, 'coupon_id', None):
             order.coupon = None
-            order.save()
+            order.save(update_fields=['coupon'])
 
     # If the cart is empty, don't keep shipping or coupon around
-    if hasattr(order, 'items') and order.items.count() == 0:
+    # IMPORTANT: Check items count after refresh
+    items_count = order.items.count()
+    if items_count == 0:
+        # Always clear coupon when cart is empty, regardless of session flag
+        if getattr(order, 'coupon_id', None):
+            order.coupon = None
+            order.save(update_fields=['coupon'])
+        # Clear coupon session flag
+        if 'coupon_applied_at' in request.session:
+            del request.session['coupon_applied_at']
+            request.session.modified = True
+        # Clear shipping and discounts
         order.clear_discounts_and_shipping(request)
     
     # Clear shipping and tax data if no shipping address is set (for ALL orders)

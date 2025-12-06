@@ -433,16 +433,40 @@
       "note": "Replace ORDER-REF-12345 with actual order reference_number. No auth required for public access by reference"
     },
     
-    "13_apply_coupon": {
+    "13_apply_coupon_test10": {
       "method": "POST",
       "url": "http://127.0.0.1:8000/api/cart/coupons/apply/",
       "headers": {
         "Content-Type": "application/json"
       },
       "body": {
-        "code": "SAVE10"
+        "code": "TEST10"
       },
-      "note": "No authentication required - uses session-based cart"
+      "note": "Fixed $10 off (Min: $50) - No authentication required"
+    },
+    
+    "13b_apply_coupon_save20": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/cart/coupons/apply/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "code": "SAVE20"
+      },
+      "note": "20% off (Min: $100) - No authentication required"
+    },
+    
+    "13c_apply_coupon_invalid": {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/cart/coupons/apply/",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "code": "INVALID123"
+      },
+      "note": "Test invalid coupon - should return error"
     },
     
     "14_remove_coupon": {

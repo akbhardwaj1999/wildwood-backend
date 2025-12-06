@@ -5,8 +5,25 @@ from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
+
+# Optional swagger imports
+try:
+    from drf_yasg.utils import swagger_auto_schema
+    from drf_yasg import openapi
+    SWAGGER_AVAILABLE = True
+except ImportError:
+    # Create dummy decorators if drf_yasg is not installed
+    def swagger_auto_schema(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    
+    class openapi:
+        class Response:
+            def __init__(self, *args, **kwargs):
+                pass
+    
+    SWAGGER_AVAILABLE = False
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils import timezone
@@ -17,7 +34,7 @@ from .serializers import (
     AddressSerializer, OrderSerializer, OrderItemSerializer,
     OrderItemCreateUpdateSerializer, PaymentSerializer, CouponSerializer,
     ShippingCostSerializer, AddToCartSerializer, UpdateCartItemSerializer,
-    ApplyCouponSerializer
+    ApplyCouponSerializer, CreatePaymentSerializer
 )
 from .utils import get_or_set_order_session, calculate_total_shipping_cost
 from galleryItem.models import Variant
@@ -261,21 +278,35 @@ def remove_from_cart(request, item_id):
     
     order_item.delete()
     
-    # Reset abandoned cart email counters
-    if order.abandoned_email_count > 0:
-        current_time = timezone.now()
-        Order.objects.filter(id=order.id).update(
-            start_date=current_time,
-            last_updated=current_time,
-            abandoned_email_count=0,
-            abandoned_email_sent=False,
-            abandoned_email_sent_at=None,
-            total_shipping_cost=0
-        )
-        order.refresh_from_db()
-    else:
+    # Refresh order to check if cart is now empty
+    order.refresh_from_db()
+    
+    # If cart is now empty, clear coupon and all discounts
+    if not order.items.exists():
+        order.coupon = None
+        if 'coupon_applied_at' in request.session:
+            del request.session['coupon_applied_at']
         order.total_shipping_cost = 0
-        order.save(update_fields=['total_shipping_cost'])
+        order.tax_amount = 0
+        order.is_tax_exempt = False
+        order.wholesale_discount = 0
+        order.save(update_fields=['coupon', 'total_shipping_cost', 'tax_amount', 'is_tax_exempt', 'wholesale_discount'])
+    else:
+        # Reset abandoned cart email counters
+        if order.abandoned_email_count > 0:
+            current_time = timezone.now()
+            Order.objects.filter(id=order.id).update(
+                start_date=current_time,
+                last_updated=current_time,
+                abandoned_email_count=0,
+                abandoned_email_sent=False,
+                abandoned_email_sent_at=None,
+                total_shipping_cost=0
+            )
+            order.refresh_from_db()
+        else:
+            order.total_shipping_cost = 0
+            order.save(update_fields=['total_shipping_cost'])
     
     # Save order_id to session
     request.session['order_id'] = order.id
@@ -311,11 +342,17 @@ def clear_cart(request):
     """Clear entire cart"""
     order = get_or_set_order_session(request)
     order.items.all().delete()
+    
+    # Clear coupon and session flag
+    order.coupon = None
+    if 'coupon_applied_at' in request.session:
+        del request.session['coupon_applied_at']
+    
+    # Clear all discounts and shipping
     order.total_shipping_cost = 0
     order.tax_amount = 0
     order.is_tax_exempt = False
     order.wholesale_discount = 0
-    order.coupon = None
     order.save()
     
     # Save order_id to session
@@ -344,18 +381,21 @@ class AddressListView(generics.ListCreateAPIView):
     List user's addresses or create new address.
     
     GET: List all addresses for authenticated user
-    POST: Create new address
+    POST: Create new address (allows guest users for checkout)
     """
     serializer_class = AddressSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Allow guest checkout
     
     def get_queryset(self):
-        """Get addresses for current user"""
-        return Address.objects.filter(user=self.request.user)
+        """Get addresses for current user (if authenticated)"""
+        if self.request.user.is_authenticated:
+            return Address.objects.filter(user=self.request.user)
+        return Address.objects.none()  # Guest users can't list addresses
     
     def perform_create(self, serializer):
-        """Set user when creating address"""
-        serializer.save(user=self.request.user)
+        """Set user when creating address (None for guest users)"""
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(user=user)
     
     @swagger_auto_schema(
         operation_description="List all addresses for authenticated user",
@@ -544,12 +584,13 @@ def apply_coupon(request):
             'error': 'Cart is empty. Add items to cart before applying coupon.'
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    # Check minimum order amount
-    subtotal = order.get_raw_subtotal()
-    if subtotal < coupon.minimum_order_amount:
-        return Response({
-            'error': f'The minimum order amount should be ${coupon.minimum_order_amount} for this coupon.'
-        }, status=status.HTTP_400_BAD_REQUEST)
+    # Check minimum order amount (only if minimum_order_amount > 0)
+    if coupon.minimum_order_amount > 0:
+        subtotal = order.get_raw_subtotal()
+        if subtotal < coupon.minimum_order_amount:
+            return Response({
+                'error': f'The minimum order amount should be ${coupon.minimum_order_amount} for this coupon.'
+            }, status=status.HTTP_400_BAD_REQUEST)
     
     # Apply coupon
     order.coupon = coupon
@@ -706,3 +747,137 @@ class CouponDetailView(generics.RetrieveUpdateDestroyAPIView):
     )
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
+
+
+@swagger_auto_schema(
+    method='post',
+    operation_description="Process payment for order (Stripe or PayPal)",
+    request_body=CreatePaymentSerializer,
+    responses={
+        200: openapi.Response('Success', PaymentSerializer),
+        400: 'Bad Request - Invalid payment data',
+        404: 'Not Found - Order not found',
+    },
+    tags=['Payment']
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])  # Allow guest checkout
+def process_payment(request):
+    """
+    Process payment for an order.
+    Supports both Stripe (card) and PayPal payments.
+    """
+    serializer = CreatePaymentSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    order = get_or_set_order_session(request)
+    
+    # Check if order has items
+    if not order.items.exists():
+        return Response(
+            {'error': 'Order is empty. Please add items to cart first.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Check if order already has a successful payment
+    existing_payment = Payment.objects.filter(order=order, successful=True).first()
+    if existing_payment:
+        return Response(
+            {'error': 'Order already has a successful payment.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    payment_method = serializer.validated_data['payment_method']
+    address_id = serializer.validated_data.get('address_id')
+    
+    # Set shipping address if provided
+    if address_id:
+        try:
+            address = Address.objects.get(id=address_id)
+            order.shipping_address = address
+            order.save(update_fields=['shipping_address'])
+        except Address.DoesNotExist:
+            return Response(
+                {'error': 'Address not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    # Get order total
+    order_total = float(order.get_raw_total())
+    
+    # Process payment based on method
+    if payment_method == Payment.STRIPE:
+        # Stripe payment processing
+        stripe_token = serializer.validated_data.get('stripe_token')
+        if not stripe_token:
+            return Response(
+                {'error': 'Stripe token is required for card payment.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # TODO: Integrate Stripe API here
+        # For now, we'll simulate a successful payment
+        # In production, you would:
+        # 1. Use stripe library to charge the card
+        # 2. Get transaction ID from Stripe
+        # 3. Store the response
+        
+        transaction_id = f"stripe_{order.reference_number}_{timezone.now().timestamp()}"
+        payment_successful = True  # In production, this comes from Stripe API response
+        raw_response = f"Stripe payment processed. Token: {stripe_token[:20]}..."
+        
+    elif payment_method == Payment.PAYPAL:
+        # PayPal payment processing
+        paypal_order_id = serializer.validated_data.get('paypal_order_id')
+        if not paypal_order_id:
+            return Response(
+                {'error': 'PayPal order ID is required for PayPal payment.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # TODO: Integrate PayPal API here
+        # For now, we'll simulate a successful payment
+        # In production, you would:
+        # 1. Verify PayPal order with PayPal API
+        # 2. Capture the payment
+        # 3. Get transaction ID from PayPal
+        # 4. Store the response
+        
+        transaction_id = paypal_order_id
+        payment_successful = True  # In production, this comes from PayPal API response
+        raw_response = f"PayPal payment processed. Order ID: {paypal_order_id}"
+    
+    else:
+        return Response(
+            {'error': 'Invalid payment method.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Create payment record
+    payment = Payment.objects.create(
+        order=order,
+        payment_method=payment_method,
+        amount=order_total,
+        successful=payment_successful,
+        transaction_id=transaction_id,
+        raw_response=raw_response
+    )
+    
+    # If payment successful, mark order as ordered
+    if payment_successful:
+        order.ordered = True
+        order.ordered_date = timezone.now()
+        order.status = Order.ORDERED
+        order.save(update_fields=['ordered', 'ordered_date', 'status'])
+        
+        # Clear session order_id so a new cart can be created
+        request.session.pop('order_id', None)
+        request.session.save()
+    
+    payment_serializer = PaymentSerializer(payment)
+    return Response({
+        'message': 'Payment processed successfully' if payment_successful else 'Payment failed',
+        'payment': payment_serializer.data,
+        'order': OrderSerializer(order).data
+    }, status=status.HTTP_200_OK if payment_successful else status.HTTP_400_BAD_REQUEST)

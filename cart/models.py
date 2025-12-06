@@ -208,8 +208,10 @@ class Order(models.Model):
 
 class Payment(models.Model):
     PAYPAL = 'P'
+    STRIPE = 'S'
     PAYMENT_CHOICES = (
         (PAYPAL, 'PayPal'),
+        (STRIPE, 'Stripe'),
     )
 
     order = models.ForeignKey(
@@ -218,7 +220,8 @@ class Payment(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     successful = models.BooleanField(default=False)
     amount = models.FloatField()
-    raw_response = models.TextField()
+    raw_response = models.TextField(blank=True, null=True)
+    transaction_id = models.CharField(max_length=255, blank=True, null=True, help_text="Payment gateway transaction ID")
 
     def __str__(self):
         return self.reference_number

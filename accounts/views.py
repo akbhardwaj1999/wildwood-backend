@@ -63,7 +63,7 @@ class UserRegistrationView(generics.CreateAPIView):
 
 @swagger_auto_schema(
     method='post',
-        operation_description="Authenticate user and get JWT access token (valid for 30 days) for API access.",
+    operation_description="Authenticate user and get JWT access token (valid for 30 days) for API access.",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         required=['username', 'password'],

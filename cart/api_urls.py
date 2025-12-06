@@ -29,4 +29,7 @@ urlpatterns = [
     # Admin coupon operations
     path('admin/coupons/', api_views.CouponListView.as_view(), name='admin-coupon-list'),
     path('admin/coupons/<int:pk>/', api_views.CouponDetailView.as_view(), name='admin-coupon-detail'),
+    
+    # Payment operations
+    path('payment/process/', api_views.process_payment, name='process-payment'),
 ]
