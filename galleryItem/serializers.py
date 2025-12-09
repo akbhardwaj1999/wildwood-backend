@@ -56,6 +56,8 @@ class VariantSerializer(serializers.ModelSerializer):
     videos = VariantVideoSerializer(source='variantvideo_set', many=True, read_only=True)
     youtube_videos = VariantYoutubeVideoSerializer(source='variantyoutubevideo_set', many=True, read_only=True)
     in_stock = serializers.ReadOnlyField()
+    image = serializers.SerializerMethodField()
+    largeImage = serializers.SerializerMethodField()
     
     class Meta:
         model = Variant
@@ -65,6 +67,28 @@ class VariantSerializer(serializers.ModelSerializer):
             'in_stock', 'images', 'videos', 'youtube_videos', 'updated'
         )
         read_only_fields = ('id', 'updated')
+    
+    def get_image(self, obj):
+        """Return absolute URL for image"""
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            # Fallback: use settings if no request context
+            from django.conf import settings
+            return f"{settings.SITE_URL}{obj.image.url}" if hasattr(settings, 'SITE_URL') else obj.image.url
+        return None
+    
+    def get_largeImage(self, obj):
+        """Return absolute URL for largeImage"""
+        if obj.largeImage:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.largeImage.url)
+            # Fallback: use settings if no request context
+            from django.conf import settings
+            return f"{settings.SITE_URL}{obj.largeImage.url}" if hasattr(settings, 'SITE_URL') else obj.largeImage.url
+        return None
 
 
 class VariantCreateUpdateSerializer(serializers.ModelSerializer):

@@ -76,6 +76,12 @@ class CartView(generics.RetrieveAPIView):
         
         return order
     
+    def get_serializer_context(self):
+        """Add request to serializer context for absolute URLs"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
     @swagger_auto_schema(
         operation_description="Get current cart with all items and totals",
         responses={
@@ -176,7 +182,7 @@ def add_to_cart(request):
     ).get(id=order.id)
     
     # Return updated cart
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     response = Response({
         'message': 'Item added to cart successfully',
         'cart': cart_serializer.data,
@@ -252,7 +258,7 @@ def update_cart_item(request, item_id):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Cart item updated successfully',
         'cart': cart_serializer.data,
@@ -320,7 +326,7 @@ def remove_from_cart(request, item_id):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Item removed from cart successfully',
         'cart': cart_serializer.data,
@@ -367,7 +373,7 @@ def clear_cart(request):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Cart cleared successfully',
         'cart': cart_serializer.data,
@@ -610,7 +616,7 @@ def apply_coupon(request):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Coupon applied successfully',
         'coupon_discount_amount': order.get_coupon_discount_amount(),
@@ -665,7 +671,7 @@ def remove_coupon(request):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Coupon removed successfully',
         'cart': cart_serializer.data,
