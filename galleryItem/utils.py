@@ -1,4 +1,5 @@
 import datetime
+import os
 import requests
 from io import BytesIO
 from django.core.files.base import ContentFile
@@ -6,6 +7,9 @@ from django.core.files import File
 from decimal import Decimal
 
 from .models import GalleryItem, Variant, VariantImage, Review, Category
+
+# Check if running on PythonAnywhere (proxy issues)
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ
 
 
 def yesterday():
@@ -124,8 +128,12 @@ def import_products_from_json_data(json_data):
             
             if images:
                 try:
-                    # Download first image
-                    response = requests.get(images[0], timeout=30)
+                    # Download first image - disable proxy for PythonAnywhere
+                    request_kwargs = {'timeout': 30}
+                    if IS_PYTHONANYWHERE:
+                        request_kwargs['proxies'] = {'http': None, 'https': None}
+                    
+                    response = requests.get(images[0], **request_kwargs)
                     if response.status_code == 200:
                         first_image_content = ContentFile(response.content)
                         first_image_filename = f"product_{product.id}_img_0.jpg"
@@ -174,7 +182,12 @@ def import_products_from_json_data(json_data):
             # Download and save additional images (if any)
             for idx, image_url in enumerate(images[1:], start=1):  # Start from index 1
                 try:
-                    response = requests.get(image_url, timeout=30)
+                    # Download image - disable proxy for PythonAnywhere
+                    request_kwargs = {'timeout': 30}
+                    if IS_PYTHONANYWHERE:
+                        request_kwargs['proxies'] = {'http': None, 'https': None}
+                    
+                    response = requests.get(image_url, **request_kwargs)
                     if response.status_code == 200:
                         image_content = ContentFile(response.content)
                         filename = f"product_{product.id}_img_{idx}.jpg"
