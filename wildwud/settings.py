@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -230,14 +231,19 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',
+    'https://akumar15.pythonanywhere.com',  # PythonAnywhere HTTPS
 ]
 
 # Session Configuration for Cross-Origin Requests
 # Required for session-based cart to work with Next.js frontend
 # For localhost development with different ports (3000 and 8000), we need 'None' with Secure=False
 # In production with HTTPS, use 'None' with Secure=True
+
+# Detect if running on PythonAnywhere (HTTPS)
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ or 'akumar15.pythonanywhere.com' in ALLOWED_HOSTS
+
 SESSION_COOKIE_SAMESITE = 'None'  # Allow cross-origin requests (required for different ports)
-SESSION_COOKIE_SECURE = False  # False for localhost HTTP, True in production with HTTPS
+SESSION_COOKIE_SECURE = IS_PYTHONANYWHERE  # True for HTTPS (PythonAnywhere), False for localhost HTTP
 SESSION_COOKIE_HTTPONLY = True  # Security: prevent JavaScript access
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days (default)
