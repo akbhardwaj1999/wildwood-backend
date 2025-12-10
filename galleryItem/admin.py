@@ -88,8 +88,6 @@ class GalleryItemAdmin(admin.ModelAdmin):
             'has_permission': True,
         }
         return render(request, 'admin/galleryitem/import_json.html', context)
-    
-    change_list_template = 'admin/galleryitem/galleryitem_changelist.html'
 
 
 class SpecialPriceAdmin(admin.ModelAdmin):
