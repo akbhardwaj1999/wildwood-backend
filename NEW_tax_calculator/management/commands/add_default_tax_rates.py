@@ -38,7 +38,7 @@ class Command(BaseCommand):
             'New York': {
                 'state_rate': Decimal('0.0800'),  # 8.00%
                 'cities': {
-                    'New York City': Decimal('0.0888'),  # 8.88%
+                    'New York': Decimal('0.0888'),  # 8.88% (Note: City name is "New York" not "New York City")
                     'Buffalo': Decimal('0.0825'),  # 8.25%
                     'Rochester': Decimal('0.0800'),  # 8.00%
                     'Albany': Decimal('0.0800'),  # 8.00%
@@ -103,28 +103,9 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f'  State already exists: {state.name}')
             
-            # Add state-level tax rate
-            state_rate_obj, created = NEW_TaxRate.objects.get_or_create(
-                country=country,
-                state=state,
-                city=None,
-                defaults={
-                    'rate': state_data['state_rate'],
-                    'tax_type': 'sales',
-                    'effective_date': date.today(),
-                    'is_active': True,
-                }
-            )
-            if created:
-                total_created += 1
-                self.stdout.write(self.style.SUCCESS(f'    [OK] Added state rate: {state.name} - {state_data["state_rate"] * 100:.2f}%'))
-            else:
-                # Update if exists
-                state_rate_obj.rate = state_data['state_rate']
-                state_rate_obj.is_active = True
-                state_rate_obj.save()
-                total_updated += 1
-                self.stdout.write(f'    [UPDATED] Updated state rate: {state.name} - {state_data["state_rate"] * 100:.2f}%')
+            # Note: City is now required, so we only add city-level tax rates
+            # State-level rates are not created (city must be specified)
+            self.stdout.write(f'    Adding city-level tax rates for {state.name}...')
             
             # Add city-level tax rates
             for city_name, city_rate in state_data['cities'].items():
