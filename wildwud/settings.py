@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-9v3l^71=b#$znmwv+b)2qcdc2_112nzo0&w(=ory8ih6+mn&%&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['akumar15.pythonanywhere.com','localhost','127.0.0.1']
+ALLOWED_HOSTS = ['a3dcreator.pythonanywhere.com','localhost','127.0.0.1']
 
 
 # Application definition
@@ -241,7 +241,7 @@ CSRF_TRUSTED_ORIGINS = [
 # In production with HTTPS, use 'None' with Secure=True
 
 # Detect if running on PythonAnywhere (HTTPS)
-IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ or 'akumar15.pythonanywhere.com' in ALLOWED_HOSTS
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ or 'a3dcreator.pythonanywhere.com' in ALLOWED_HOSTS
 
 SESSION_COOKIE_SAMESITE = 'None'  # Allow cross-origin requests (required for different ports)
 SESSION_COOKIE_SECURE = IS_PYTHONANYWHERE  # True for HTTPS (PythonAnywhere), False for localhost HTTP
