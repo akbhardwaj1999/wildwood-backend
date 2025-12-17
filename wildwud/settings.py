@@ -259,3 +259,13 @@ USE_DJANGO_JQUERY = True  # Use Django's jQuery in admin (required for smart-sel
 WAREHOUSE_COUNTRY = 'United States'  # Warehouse country
 WAREHOUSE_STATE = 'California'  # Warehouse state (update with your actual warehouse location)
 WAREHOUSE_CITY = 'Los Angeles'  # Warehouse city (update with your actual warehouse location)
+
+# Payment Gateway Settings
+# PayPal Configuration
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', '')  # Get from PayPal Developer Dashboard
+PAYPAL_CLIENT_SECRET = os.environ.get('PAYPAL_CLIENT_SECRET', '')  # Get from PayPal Developer Dashboard
+PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')  # 'sandbox' for testing, 'live' for production
+
+# Stripe Configuration
+STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')  # Get from Stripe Dashboard
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')  # Get from Stripe Dashboard

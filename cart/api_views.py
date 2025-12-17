@@ -28,6 +28,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
+import json
 
 from .models import Address, Order, OrderItem, Payment, Coupon, ShippingCost
 from .serializers import (
@@ -842,17 +843,20 @@ def process_payment(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # TODO: Integrate PayPal API here
-        # For now, we'll simulate a successful payment
-        # In production, you would:
-        # 1. Verify PayPal order with PayPal API
-        # 2. Capture the payment
-        # 3. Get transaction ID from PayPal
-        # 4. Store the response
+        # Verify and capture PayPal payment
+        from .payment_utils import verify_paypal_order
         
-        transaction_id = paypal_order_id
-        payment_successful = True  # In production, this comes from PayPal API response
-        raw_response = f"PayPal payment processed. Order ID: {paypal_order_id}"
+        paypal_result = verify_paypal_order(paypal_order_id, order_total)
+        
+        if not paypal_result['success']:
+            return Response(
+                {'error': paypal_result.get('error', 'PayPal payment verification failed')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        transaction_id = paypal_result['transaction_id']
+        payment_successful = True
+        raw_response = json.dumps(paypal_result['raw_response'])
     
     else:
         return Response(
@@ -870,12 +874,44 @@ def process_payment(request):
         raw_response=raw_response
     )
     
-    # If payment successful, mark order as ordered
+    # If payment successful, mark order as ordered and update stock
     if payment_successful:
-        order.ordered = True
-        order.ordered_date = timezone.now()
-        order.status = Order.ORDERED
-        order.save(update_fields=['ordered', 'ordered_date', 'status'])
+        with transaction.atomic():
+            # Update order status
+            order.ordered = True
+            order.ordered_date = timezone.now()
+            order.status = Order.ORDERED
+            order.save(update_fields=['ordered', 'ordered_date', 'status'])
+            
+            # Update product stock
+            for item in order.items.all():
+                # Update variant quantity
+                item.variant.quantity = item.variant.quantity - item.quantity
+                item.variant.save()
+                
+                # Update supplies stock if needed
+                for ps in item.variant.variantsupply_set.all():
+                    ps.supply.quantity = ps.supply.quantity - (ps.quantity_required * item.quantity)
+                    ps.supply.save()
+            
+            # Send order confirmation email (if user exists)
+            if order.user:
+                try:
+                    from .utils import send_new_order_email
+                    send_new_order_email(order)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to send order email: {str(e)}")
+            
+            # Send out of stock email if needed
+            try:
+                from mainsite.tasks import send_out_of_stock_email
+                send_out_of_stock_email(notify_all_in_stock=False)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send out of stock email: {str(e)}")
         
         # Clear session order_id so a new cart can be created
         request.session.pop('order_id', None)
