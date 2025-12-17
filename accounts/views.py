@@ -166,7 +166,7 @@ def logout_view(request):
 class UserProfileView(generics.RetrieveAPIView):
     """
     Get current authenticated user's profile information.
-    
+
     Returns the profile details of the currently authenticated user.
     Requires authentication.
     """
@@ -283,4 +283,5 @@ class UserListView(generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
 

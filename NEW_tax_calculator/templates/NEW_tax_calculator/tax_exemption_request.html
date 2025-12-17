@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_specific_title %} | Tax Exemption Request{% endblock %}
+
+{% block page_specific_meta_tags %}
+    <meta name="robots" content="noindex"/>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Tax Exemption Request</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">
+                            Apply for tax exemption status. Upload your tax exemption certificate 
+                            and supporting documents for review.
+                        </p>
+                        
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.exemption_type.id_for_label }}" class="form-label">
+                                    Exemption Type *
+                                </label>
+                                {{ form.exemption_type }}
+                                {% if form.exemption_type.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.exemption_type.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.tax_id.id_for_label }}" class="form-label">
+                                    Tax ID / EIN *
+                                </label>
+                                {{ form.tax_id }}
+                                {% if form.tax_id.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.tax_id.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.organization_name.id_for_label }}" class="form-label">
+                                    Organization Name *
+                                </label>
+                                {{ form.organization_name }}
+                                {% if form.organization_name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.organization_name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.contact_person.id_for_label }}" class="form-label">
+                                    Contact Person *
+                                </label>
+                                {{ form.contact_person }}
+                                {% if form.contact_person.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.contact_person.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.contact_email.id_for_label }}" class="form-label">
+                                    Contact Email *
+                                </label>
+                                {{ form.contact_email }}
+                                {% if form.contact_email.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.contact_email.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.contact_phone.id_for_label }}" class="form-label">
+                                    Contact Phone *
+                                </label>
+                                {{ form.contact_phone }}
+                                {% if form.contact_phone.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.contact_phone.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.business_address.id_for_label }}" class="form-label">
+                                    Business Address *
+                                </label>
+                                {{ form.business_address }}
+                                {% if form.business_address.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.business_address.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <label for="{{ form.exemption_certificate.id_for_label }}" class="form-label">
+                                    Tax Exemption Certificate *
+                                </label>
+                                {{ form.exemption_certificate }}
+                                {% if form.exemption_certificate.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.exemption_certificate.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    Upload your official tax exemption certificate (PDF, JPG, or PNG).
+                                </small>
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <label for="{{ form.additional_documents.id_for_label }}" class="form-label">
+                                    Additional Documents (Optional)
+                                </label>
+                                {{ form.additional_documents }}
+                                {% if form.additional_documents.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.additional_documents.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    Upload any additional supporting documents.
+                                </small>
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <label for="{{ form.reason.id_for_label }}" class="form-label">
+                                    Reason for Exemption *
+                                </label>
+                                {{ form.reason }}
+                                {% if form.reason.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.reason.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'NEW_tax_calculator:exemption_status' %}" class="btn btn-secondary me-md-2">
+                                    Check Status
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    Submit Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

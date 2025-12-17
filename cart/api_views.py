@@ -28,6 +28,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
+import json
 
 from .models import Address, Order, OrderItem, Payment, Coupon, ShippingCost
 from .serializers import (
@@ -76,6 +77,12 @@ class CartView(generics.RetrieveAPIView):
         print(f"DEBUG CartView - Order ID: {order.id}, Items count: {order.items.count()}")
         
         return order
+    
+    def get_serializer_context(self):
+        """Add request to serializer context for absolute URLs"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
     
     @swagger_auto_schema(
         operation_description="Get current cart with all items and totals",
@@ -177,7 +184,7 @@ def add_to_cart(request):
     ).get(id=order.id)
     
     # Return updated cart
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     response = Response({
         'message': 'Item added to cart successfully',
         'cart': cart_serializer.data,
@@ -253,7 +260,7 @@ def update_cart_item(request, item_id):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Cart item updated successfully',
         'cart': cart_serializer.data,
@@ -321,7 +328,7 @@ def remove_from_cart(request, item_id):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Item removed from cart successfully',
         'cart': cart_serializer.data,
@@ -368,7 +375,7 @@ def clear_cart(request):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Cart cleared successfully',
         'cart': cart_serializer.data,
@@ -611,7 +618,7 @@ def apply_coupon(request):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Coupon applied successfully',
         'coupon_discount_amount': order.get_coupon_discount_amount(),
@@ -666,7 +673,7 @@ def remove_coupon(request):
         Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
     ).get(id=order.id)
     
-    cart_serializer = OrderSerializer(order)
+    cart_serializer = OrderSerializer(order, context={'request': request})
     return Response({
         'message': 'Coupon removed successfully',
         'cart': cart_serializer.data,
@@ -850,14 +857,9 @@ def process_payment(request):
         # 3. Get transaction ID from PayPal
         # 4. Store the response
         
-        # Note: Payment processing works in simulation mode even without PayPal credentials
-        # This allows testing and development without requiring PayPal API setup
-        
         transaction_id = paypal_order_id
         payment_successful = True  # In production, this comes from PayPal API response
-        email_info = f", Email: {paypal_email}" if paypal_email else ""
-        mode_info = " (Simulation Mode)" if not paypal_configured else ""
-        raw_response = f"PayPal payment processed. Order ID: {paypal_order_id}{email_info}{mode_info}"
+        raw_response = f"PayPal payment processed. Order ID: {paypal_order_id}"
     
     else:
         return Response(
@@ -875,12 +877,44 @@ def process_payment(request):
         raw_response=raw_response
     )
     
-    # If payment successful, mark order as ordered
+    # If payment successful, mark order as ordered and update stock
     if payment_successful:
-        order.ordered = True
-        order.ordered_date = timezone.now()
-        order.status = Order.ORDERED
-        order.save(update_fields=['ordered', 'ordered_date', 'status'])
+        with transaction.atomic():
+            # Update order status
+            order.ordered = True
+            order.ordered_date = timezone.now()
+            order.status = Order.ORDERED
+            order.save(update_fields=['ordered', 'ordered_date', 'status'])
+            
+            # Update product stock
+            for item in order.items.all():
+                # Update variant quantity
+                item.variant.quantity = item.variant.quantity - item.quantity
+                item.variant.save()
+                
+                # Update supplies stock if needed
+                for ps in item.variant.variantsupply_set.all():
+                    ps.supply.quantity = ps.supply.quantity - (ps.quantity_required * item.quantity)
+                    ps.supply.save()
+            
+            # Send order confirmation email (if user exists)
+            if order.user:
+                try:
+                    from .utils import send_new_order_email
+                    send_new_order_email(order)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to send order email: {str(e)}")
+            
+            # Send out of stock email if needed
+            try:
+                from mainsite.tasks import send_out_of_stock_email
+                send_out_of_stock_email(notify_all_in_stock=False)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send out of stock email: {str(e)}")
         
         # Clear session order_id so a new cart can be created
         request.session.pop('order_id', None)

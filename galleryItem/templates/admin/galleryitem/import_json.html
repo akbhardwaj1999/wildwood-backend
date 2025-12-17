@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:galleryitem_galleryitem_changelist' %}">Gallery items</a>
+&rsaquo; Import JSON
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Import Products from JSON</h1>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+        <label for="json_file">Select JSON file:</label>
+        <input type="file" name="json_file" id="json_file" accept=".json" required>
+    </div>
+    <div style="margin-top: 20px;">
+        <input type="submit" value="Upload and Import" class="default">
+        <a href="{% url 'admin:galleryitem_galleryitem_changelist' %}" class="button">Cancel</a>
+    </div>
+</form>
+
+<div style="margin-top: 30px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #417690;">
+    <h3>Instructions:</h3>
+    <ul>
+        <li>Upload a JSON file containing product data</li>
+        <li>The file should contain an array of product objects</li>
+        <li>Each product should have: title, description, category, variants, images, etc.</li>
+    </ul>
+</div>
+{% endblock %}
+

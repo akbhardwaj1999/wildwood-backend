@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-9v3l^71=b#$znmwv+b)2qcdc2_112nzo0&w(=ory8ih6+mn&%&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['a3dcreator.pythonanywhere.com','localhost','127.0.0.1']
 
 
 # Application definition
@@ -40,11 +41,12 @@ INSTALLED_APPS = [
     'corsheaders',  # CORS support for Next.js frontend
     'rest_framework',
     'rest_framework_simplejwt',
-    'drf_yasg',
+    # 'drf_yasg',  # Optional - comment out if not installed
     'mptt',  # Required for Category model
     'accounts',
     'galleryItem',
     'cart',
+    'NEW_tax_calculator',
 ]
 
 MIDDLEWARE = [
@@ -123,14 +125,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
-# Media files (User uploaded files, Product images)
-# https://docs.djangoproject.com/en/5.2/topics/files/
-# Database stores paths like 'products/images/small/...'
-# MEDIA_URL = '/' ensures URLs are like '/products/images/small/...'
-MEDIA_URL = '/'  # Leading slash for absolute URLs
-MEDIA_ROOT = BASE_DIR  # Root directory (images are in products/ subfolder)
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -228,22 +232,20 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',
+    'https://akumar15.pythonanywhere.com',  # PythonAnywhere HTTPS
 ]
 
 # Session Configuration for Cross-Origin Requests
 # Required for session-based cart to work with Next.js frontend
 # For localhost development with different ports (3000 and 8000), we need 'None' with Secure=False
 # In production with HTTPS, use 'None' with Secure=True
+
+# Detect if running on PythonAnywhere (HTTPS)
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ or 'a3dcreator.pythonanywhere.com' in ALLOWED_HOSTS
+
 SESSION_COOKIE_SAMESITE = 'None'  # Allow cross-origin requests (required for different ports)
-SESSION_COOKIE_SECURE = False  # False for localhost HTTP, True in production with HTTPS
+SESSION_COOKIE_SECURE = IS_PYTHONANYWHERE  # True for HTTPS (PythonAnywhere), False for localhost HTTP
 SESSION_COOKIE_HTTPONLY = True  # Security: prevent JavaScript access
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days (default)
 SESSION_COOKIE_DOMAIN = None  # None means current domain (localhost)
-
-# PayPal Configuration (Optional - for production PayPal integration)
-# Set these in environment variables or local settings for production
-# For now, these are optional and payment processing will work in simulation mode
-PAYPAL_CLIENT_ID = ''  # Set via environment variable: os.environ.get('PAYPAL_CLIENT_ID', '')
-PAYPAL_CLIENT_SECRET = ''  # Set via environment variable: os.environ.get('PAYPAL_CLIENT_SECRET', '')
-PAYPAL_MODE = 'sandbox'  # 'sandbox' or 'live'

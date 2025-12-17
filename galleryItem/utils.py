@@ -1,11 +1,60 @@
 import datetime
+import os
+import time
 import requests
 from io import BytesIO
 from django.core.files.base import ContentFile
 from django.core.files import File
 from decimal import Decimal
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .models import GalleryItem, Variant, VariantImage, Review, Category
+
+# Check if running on PythonAnywhere (proxy issues)
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ or 'akumar15.pythonanywhere.com' in os.environ.get('ALLOWED_HOSTS', '')
+
+# Create a session with retry strategy
+def create_session():
+    """Create a requests session with retry strategy"""
+    session = requests.Session()
+    
+    # Retry strategy
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"]
+    )
+    
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    # Set headers to mimic a browser
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+    })
+    
+    # Disable proxy for PythonAnywhere
+    if IS_PYTHONANYWHERE:
+        session.proxies = {'http': None, 'https': None}
+    
+    return session
+
+# Global session
+_global_session = None
+
+def get_session():
+    """Get or create global session"""
+    global _global_session
+    if _global_session is None:
+        _global_session = create_session()
+    return _global_session
 
 
 def yesterday():
@@ -124,12 +173,30 @@ def import_products_from_json_data(json_data):
             
             if images:
                 try:
-                    # Download first image
-                    response = requests.get(images[0], timeout=30)
-                    if response.status_code == 200:
-                        first_image_content = ContentFile(response.content)
-                        first_image_filename = f"product_{product.id}_img_0.jpg"
-                        stats['images'] += 1
+                    # Download first image with retry logic
+                    session = get_session()
+                    max_retries = 3
+                    retry_delay = 2
+                    
+                    for attempt in range(max_retries):
+                        try:
+                            response = session.get(images[0], timeout=30, stream=True)
+                            if response.status_code == 200:
+                                first_image_content = ContentFile(response.content)
+                                first_image_filename = f"product_{product.id}_img_0.jpg"
+                                stats['images'] += 1
+                                break  # Success, exit retry loop
+                            else:
+                                if attempt < max_retries - 1:
+                                    time.sleep(retry_delay * (attempt + 1))
+                                    continue
+                        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                            if attempt < max_retries - 1:
+                                print(f"Attempt {attempt + 1} failed for {images[0]}, retrying in {retry_delay * (attempt + 1)}s...")
+                                time.sleep(retry_delay * (attempt + 1))
+                                continue
+                            else:
+                                raise e
                 except Exception as e:
                     print(f"Error downloading first image {images[0]}: {e}")
             
@@ -174,19 +241,38 @@ def import_products_from_json_data(json_data):
             # Download and save additional images (if any)
             for idx, image_url in enumerate(images[1:], start=1):  # Start from index 1
                 try:
-                    response = requests.get(image_url, timeout=30)
-                    if response.status_code == 200:
-                        image_content = ContentFile(response.content)
-                        filename = f"product_{product.id}_img_{idx}.jpg"
-                        
-                        # Additional images - save to VariantImage
-                        variant_image = VariantImage(
-                            variant=variant,
-                            name=f"Image {idx}"
-                        )
-                        variant_image.image.save(filename, image_content, save=True)
-                        
-                        stats['images'] += 1
+                    # Download image with retry logic
+                    session = get_session()
+                    max_retries = 3
+                    retry_delay = 2
+                    
+                    for attempt in range(max_retries):
+                        try:
+                            response = session.get(image_url, timeout=30, stream=True)
+                            if response.status_code == 200:
+                                image_content = ContentFile(response.content)
+                                filename = f"product_{product.id}_img_{idx}.jpg"
+                                
+                                # Additional images - save to VariantImage
+                                variant_image = VariantImage(
+                                    variant=variant,
+                                    name=f"Image {idx}"
+                                )
+                                variant_image.image.save(filename, image_content, save=True)
+                                
+                                stats['images'] += 1
+                                break  # Success, exit retry loop
+                            else:
+                                if attempt < max_retries - 1:
+                                    time.sleep(retry_delay * (attempt + 1))
+                                    continue
+                        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                            if attempt < max_retries - 1:
+                                print(f"Attempt {attempt + 1} failed for {image_url}, retrying in {retry_delay * (attempt + 1)}s...")
+                                time.sleep(retry_delay * (attempt + 1))
+                                continue
+                            else:
+                                raise e
                 except Exception as e:
                     print(f"Error downloading image {image_url}: {e}")
             
