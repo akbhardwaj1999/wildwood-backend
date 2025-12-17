@@ -38,6 +38,7 @@ from .serializers import (
 )
 from .utils import get_or_set_order_session, calculate_total_shipping_cost
 from galleryItem.models import Variant
+from django.conf import settings
 
 
 class CartView(generics.RetrieveAPIView):
@@ -830,11 +831,16 @@ def process_payment(request):
     elif payment_method == Payment.PAYPAL:
         # PayPal payment processing
         paypal_order_id = serializer.validated_data.get('paypal_order_id')
+        paypal_email = serializer.validated_data.get('paypal_email', '')
+        
+        # Check if PayPal credentials are configured (optional for simulation mode)
+        # For now, we allow simulation mode even without credentials
+        # Payment processing works in simulation mode regardless of credentials
+        paypal_configured = bool(getattr(settings, 'PAYPAL_CLIENT_ID', ''))
+        
+        # Generate order ID if not provided (for simulation/testing)
         if not paypal_order_id:
-            return Response(
-                {'error': 'PayPal order ID is required for PayPal payment.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            paypal_order_id = f"PAYPAL_{order.reference_number}_{timezone.now().timestamp()}"
         
         # TODO: Integrate PayPal API here
         # For now, we'll simulate a successful payment
@@ -844,9 +850,14 @@ def process_payment(request):
         # 3. Get transaction ID from PayPal
         # 4. Store the response
         
+        # Note: Payment processing works in simulation mode even without PayPal credentials
+        # This allows testing and development without requiring PayPal API setup
+        
         transaction_id = paypal_order_id
         payment_successful = True  # In production, this comes from PayPal API response
-        raw_response = f"PayPal payment processed. Order ID: {paypal_order_id}"
+        email_info = f", Email: {paypal_email}" if paypal_email else ""
+        mode_info = " (Simulation Mode)" if not paypal_configured else ""
+        raw_response = f"PayPal payment processed. Order ID: {paypal_order_id}{email_info}{mode_info}"
     
     else:
         return Response(

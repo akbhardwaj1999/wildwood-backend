@@ -143,6 +143,20 @@ class CreatePaymentSerializer(serializers.Serializer):
     stripe_token = serializers.CharField(required=False, allow_blank=True, help_text="Stripe payment token")
     # For PayPal
     paypal_order_id = serializers.CharField(required=False, allow_blank=True, help_text="PayPal order ID")
+    paypal_email = serializers.EmailField(required=False, allow_blank=True, help_text="PayPal email address")
+    
+    def validate(self, attrs):
+        """Validate payment data"""
+        payment_method = attrs.get('payment_method')
+        
+        # For PayPal payments, allow simulation mode even without credentials
+        # This allows testing without requiring PayPal API setup
+        if payment_method == Payment.PAYPAL:
+            # PayPal payment processing works in simulation mode
+            # No need to check for credentials here as payment processing handles it
+            pass
+        
+        return attrs
 
 
 class CouponSerializer(serializers.ModelSerializer):

@@ -240,3 +240,10 @@ SESSION_COOKIE_HTTPONLY = True  # Security: prevent JavaScript access
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days (default)
 SESSION_COOKIE_DOMAIN = None  # None means current domain (localhost)
+
+# PayPal Configuration (Optional - for production PayPal integration)
+# Set these in environment variables or local settings for production
+# For now, these are optional and payment processing will work in simulation mode
+PAYPAL_CLIENT_ID = ''  # Set via environment variable: os.environ.get('PAYPAL_CLIENT_ID', '')
+PAYPAL_CLIENT_SECRET = ''  # Set via environment variable: os.environ.get('PAYPAL_CLIENT_SECRET', '')
+PAYPAL_MODE = 'sandbox'  # 'sandbox' or 'live'
