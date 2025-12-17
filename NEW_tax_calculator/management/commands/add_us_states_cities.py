@@ -16,8 +16,7 @@ class Command(BaseCommand):
         
         # Get or create United States country
         country, created = Country.objects.get_or_create(
-            name='United States',
-            defaults={'code': 'US'}
+            name='United States'
         )
         if created:
             self.stdout.write(self.style.SUCCESS(f'Created country: {country.name}'))
