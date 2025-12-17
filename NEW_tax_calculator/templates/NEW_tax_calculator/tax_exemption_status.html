@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_specific_title %} | Tax Exemption Status{% endblock %}
+
+{% block page_specific_meta_tags %}
+    <meta name="robots" content="noindex"/>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Tax Exemption Status</h2>
+                    </div>
+                    <div class="card-body">
+                        {% if tax_exemption %}
+                            {% if tax_exemption.is_approved %}
+                                <div class="alert alert-success">
+                                    <h4 class="alert-heading">Tax Exemption Approved!</h4>
+                                    <p class="mb-0">
+                                        Your tax exemption request has been approved. 
+                                        You will not be charged tax on your orders.
+                                    </p>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5>Exemption Details</h5>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Organization:</strong> {{ tax_exemption.organization_name }}</li>
+                                            <li><strong>Exemption Type:</strong> {{ tax_exemption.get_exemption_type_display }}</li>
+                                            <li><strong>Tax ID:</strong> {{ tax_exemption.tax_id }}</li>
+                                            <li><strong>Status:</strong> 
+                                                <span class="badge bg-success">Approved</span>
+                                            </li>
+                                            <li><strong>Approved Date:</strong> {{ tax_exemption.approved_date|date:"M d, Y" }}</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <h5>Benefits</h5>
+                                        <ul class="list-unstyled">
+                                            <li>✓ No tax charged on orders</li>
+                                            <li>✓ Automatic tax exemption at checkout</li>
+                                            <li>✓ Valid for all future orders</li>
+                                            <li>✓ Tax-exempt status clearly displayed</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                {% if tax_exemption.expiry_date %}
+                                    <div class="mt-4">
+                                        <div class="alert alert-info">
+                                            <strong>Expiry Date:</strong> {{ tax_exemption.expiry_date|date:"M d, Y" }}
+                                            <br>
+                                            <small>Please renew your exemption before this date to maintain tax-exempt status.</small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <h4 class="alert-heading">Request Under Review</h4>
+                                    <p class="mb-0">
+                                        Your tax exemption request is currently under review. 
+                                        We'll notify you once it's processed.
+                                    </p>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5>Request Details</h5>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Organization:</strong> {{ tax_exemption.organization_name }}</li>
+                                            <li><strong>Exemption Type:</strong> {{ tax_exemption.get_exemption_type_display }}</li>
+                                            <li><strong>Tax ID:</strong> {{ tax_exemption.tax_id }}</li>
+                                            <li><strong>Status:</strong> 
+                                                <span class="badge bg-warning">Pending</span>
+                                            </li>
+                                            <li><strong>Submitted:</strong> {{ tax_exemption.created_at|date:"M d, Y" }}</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <h5>Next Steps</h5>
+                                        <ul class="list-unstyled">
+                                            <li>• Our team will review your documents</li>
+                                            <li>• We may contact you for additional information</li>
+                                            <li>• You'll receive an email notification of the decision</li>
+                                            <li>• Processing typically takes 1-2 business days</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                        {% else %}
+                            <div class="alert alert-info">
+                                <h4 class="alert-heading">No Tax Exemption</h4>
+                                <p class="mb-0">
+                                    You don't have a tax exemption yet. 
+                                    Apply now to avoid paying tax on your orders.
+                                </p>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <a href="{% url 'NEW_tax_calculator:exemption_request' %}" class="btn btn-primary">
+                                    Apply for Tax Exemption
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'shop' %}" class="btn btn-outline-secondary">
+                                Continue Shopping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

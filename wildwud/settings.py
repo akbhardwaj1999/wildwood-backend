@@ -41,11 +41,12 @@ INSTALLED_APPS = [
     'corsheaders',  # CORS support for Next.js frontend
     'rest_framework',
     'rest_framework_simplejwt',
-    'drf_yasg',
+    # 'drf_yasg',  # Optional - comment out if not installed
     'mptt',  # Required for Category model
     'accounts',
     'galleryItem',
     'cart',
+    'NEW_tax_calculator',
 ]
 
 MIDDLEWARE = [
@@ -248,3 +249,13 @@ SESSION_COOKIE_HTTPONLY = True  # Security: prevent JavaScript access
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days (default)
 SESSION_COOKIE_DOMAIN = None  # None means current domain (localhost)
+
+# Smart Selects Configuration (for chained foreign keys in admin)
+USE_DJANGO_JQUERY = True  # Use Django's jQuery in admin (required for smart-selects)
+
+# Warehouse Location Settings (for shipping cost calculation)
+# These settings determine the warehouse location to calculate shipping costs
+# Shipping cost is calculated based on distance from warehouse to destination
+WAREHOUSE_COUNTRY = 'United States'  # Warehouse country
+WAREHOUSE_STATE = 'California'  # Warehouse state (update with your actual warehouse location)
+WAREHOUSE_CITY = 'Los Angeles'  # Warehouse city (update with your actual warehouse location)
