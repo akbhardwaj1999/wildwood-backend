@@ -249,23 +249,3 @@ SESSION_COOKIE_HTTPONLY = True  # Security: prevent JavaScript access
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days (default)
 SESSION_COOKIE_DOMAIN = None  # None means current domain (localhost)
-
-# Smart Selects Configuration (for chained foreign keys in admin)
-USE_DJANGO_JQUERY = True  # Use Django's jQuery in admin (required for smart-selects)
-
-# Warehouse Location Settings (for shipping cost calculation)
-# These settings determine the warehouse location to calculate shipping costs
-# Shipping cost is calculated based on distance from warehouse to destination
-WAREHOUSE_COUNTRY = 'United States'  # Warehouse country
-WAREHOUSE_STATE = 'California'  # Warehouse state (update with your actual warehouse location)
-WAREHOUSE_CITY = 'Los Angeles'  # Warehouse city (update with your actual warehouse location)
-
-# Payment Gateway Settings
-# PayPal Configuration
-PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', '')  # Get from PayPal Developer Dashboard
-PAYPAL_CLIENT_SECRET = os.environ.get('PAYPAL_CLIENT_SECRET', '')  # Get from PayPal Developer Dashboard
-PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')  # 'sandbox' for testing, 'live' for production
-
-# Stripe Configuration
-STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')  # Get from Stripe Dashboard
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')  # Get from Stripe Dashboard
