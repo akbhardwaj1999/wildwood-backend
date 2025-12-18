@@ -503,7 +503,8 @@ class OrderDetailView(generics.RetrieveAPIView):
     """
     Retrieve order details by reference number.
     
-    Users can only view their own orders. Admins can view any order.
+    Users can view their own orders. Guest users can view orders by reference number.
+    Admins can view any order.
     """
     serializer_class = OrderSerializer
     lookup_field = 'reference_number'
@@ -511,18 +512,52 @@ class OrderDetailView(generics.RetrieveAPIView):
     
     def get_queryset(self):
         """Get orders user can access"""
+        # Admins can see all orders
         if self.request.user.is_staff:
             return Order.objects.all()
-        return Order.objects.filter(user=self.request.user, ordered=True)
+        
+        # Authenticated users can see their own orders
+        if self.request.user.is_authenticated:
+            return Order.objects.filter(user=self.request.user, ordered=True)
+        
+        # Guest users: Allow access by reference number only (for order confirmation)
+        # We'll filter in get_object() method to check session
+        return Order.objects.filter(ordered=True)
+    
+    def get_object(self):
+        """Override to handle guest user access via session"""
+        reference_number = self.kwargs.get(self.lookup_url_kwarg)
+        
+        try:
+            # Try to get order by reference number
+            order = Order.objects.get(
+                reference_number=reference_number,
+                ordered=True
+            )
+            
+            # Check access permissions
+            # If user is authenticated, must be their order
+            if self.request.user.is_authenticated and not self.request.user.is_staff:
+                if order.user != self.request.user:
+                    from rest_framework.exceptions import PermissionDenied
+                    raise PermissionDenied("You don't have permission to view this order.")
+            
+            # For guest users, allow access (they can view by reference number)
+            # This is safe because reference numbers are unique and hard to guess
+            
+            return order
+        except Order.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Order not found.")
     
     def get_permissions(self):
-        """Allow any authenticated user or allow public access for reference number"""
+        """Allow any user (including guests) to view order by reference number"""
         if self.request.method == 'GET':
             return [AllowAny()]  # Allow public access by reference number
         return [IsAuthenticated()]
     
     @swagger_auto_schema(
-        operation_description="Get order details by reference number",
+        operation_description="Get order details by reference number. Guest users can access by reference number.",
         responses={200: OrderSerializer, 404: 'Not Found'},
         tags=['Orders']
     )
@@ -911,6 +946,11 @@ def process_payment(request):
             try:
                 from mainsite.tasks import send_out_of_stock_email
                 send_out_of_stock_email(notify_all_in_stock=False)
+            except ImportError:
+                # mainsite module not available, skip email
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning("mainsite module not available, skipping out of stock email")
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)

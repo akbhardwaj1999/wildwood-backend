@@ -1,5 +1,6 @@
 import random
 import string
+from decimal import Decimal
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -99,13 +100,19 @@ def get_or_set_order_session(request):
 
 
 def calculate_total_shipping_cost(order, country=None, state=None, city=None):
+        # Get location from order if not provided
         if not (country or state or city):
             if not order.shipping_address:
-                return 0
+                return Decimal('0.00')
             country = order.shipping_address.country
             state = order.shipping_address.state
             city = order.shipping_address.city
-            
+        
+        # Check if warehouse settings are configured
+        if not hasattr(settings, 'WAREHOUSE_COUNTRY') or not settings.WAREHOUSE_COUNTRY:
+            return Decimal('0.00')
+        
+        # Get shipping cost rules based on shipment type
         qs = ShippingCost.objects.all()
 
         if country != settings.WAREHOUSE_COUNTRY:
@@ -117,18 +124,23 @@ def calculate_total_shipping_cost(order, country=None, state=None, city=None):
         else:
             qs = qs.filter(shipment_type=ShippingCost.LOCAL)
 
-        total = 0
+        # If no shipping rules found for this type, return 0
+        if not qs.exists():
+            return Decimal('0.00')
+
+        total = Decimal('0.00')
         for item in order.items.all():
             charges = calculate_item_shipping_charges(qs, item.variant)
             if charges:
-                total += charges * item.quantity
+                total += Decimal(str(charges)) * item.quantity
         
         return total
 
 
 def calculate_item_shipping_charges(qs, variant):
-    volume = variant.volume
-    weight = variant.weight
+    # Get volume and weight, default to 1 if not set
+    volume = getattr(variant, 'volume', None) or 1
+    weight = getattr(variant, 'weight', None) or 1
     shipping_cost_by_volume = None
     shipping_cost_by_weight = None
     charges = None

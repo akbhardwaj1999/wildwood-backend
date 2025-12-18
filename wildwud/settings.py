@@ -232,7 +232,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',
-    'https://akumar15.pythonanywhere.com',  # PythonAnywhere HTTPS
+    'https://a3dcreator.pythonanywhere.com',  # PythonAnywhere HTTPS
 ]
 
 # Session Configuration for Cross-Origin Requests
@@ -249,3 +249,14 @@ SESSION_COOKIE_HTTPONLY = True  # Security: prevent JavaScript access
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days (default)
 SESSION_COOKIE_DOMAIN = None  # None means current domain (localhost)
+
+# Warehouse Location Settings (for shipping cost calculation)
+WAREHOUSE_COUNTRY = 'United States'
+WAREHOUSE_STATE = 'California'
+WAREHOUSE_CITY = 'Los Angeles'
+
+# Payment Gateway Settings
+# PayPal Configuration
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', '')
+PAYPAL_CLIENT_SECRET = os.environ.get('PAYPAL_CLIENT_SECRET', '')
+PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')  # 'sandbox' for testing, 'live' for production
