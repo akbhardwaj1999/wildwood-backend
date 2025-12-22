@@ -502,6 +502,12 @@ class OrderListView(generics.ListAPIView):
             ordered=True
         ).order_by('-ordered_date')
     
+    def get_serializer_context(self):
+        """Add request to serializer context for absolute URLs"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
     @swagger_auto_schema(
         operation_description="List all orders for authenticated user",
         responses={200: OrderSerializer(many=True)},
@@ -521,6 +527,12 @@ class OrderDetailView(generics.RetrieveAPIView):
     serializer_class = OrderSerializer
     lookup_field = 'reference_number'
     lookup_url_kwarg = 'reference_number'
+    
+    def get_serializer_context(self):
+        """Add request to serializer context for absolute URLs"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
     
     def get_queryset(self):
         """Get orders user can access"""
