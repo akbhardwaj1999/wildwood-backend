@@ -56,6 +56,13 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'current_password', 'new_password', 'confirm_password')
 
+    def validate_email(self, value):
+        # Check if email is being changed and if it already exists (excluding current user)
+        if self.instance and self.instance.email != value:
+            if User.objects.filter(email=value).exclude(pk=self.instance.pk).exists():
+                raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
     def validate(self, attrs):
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_password')

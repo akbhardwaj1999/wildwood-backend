@@ -403,7 +403,11 @@ class AddressListView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         """Set user when creating address (None for guest users)"""
         user = self.request.user if self.request.user.is_authenticated else None
-        serializer.save(user=user)
+        address = serializer.save(user=user)
+        
+        # If this address is set as default, unset all other default addresses for this user
+        if address.default and user:
+            Address.objects.filter(user=user, default=True).exclude(pk=address.pk).update(default=False)
     
     @swagger_auto_schema(
         operation_description="List all addresses for authenticated user",
@@ -437,6 +441,14 @@ class AddressDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         """Get addresses for current user only"""
         return Address.objects.filter(user=self.request.user)
+    
+    def perform_update(self, serializer):
+        """Update address and handle default address logic"""
+        address = serializer.save()
+        
+        # If this address is set as default, unset all other default addresses for this user
+        if address.default and address.user:
+            Address.objects.filter(user=address.user, default=True).exclude(pk=address.pk).update(default=False)
     
     @swagger_auto_schema(
         operation_description="Get address details",

@@ -814,12 +814,12 @@ class ApplyCouponView(View):
                 return JsonResponse({"error": "This coupon has been consumed before."})
         # Check minimum order amount (only if minimum_order_amount > 0)
         if coupon.minimum_order_amount > 0:
-            if order.get_raw_subtotal() < coupon.minimum_order_amount:
-                return JsonResponse(
-                    {
-                        "error": f"The minimum order amount should be ${coupon.minimum_order_amount} for this coupon."
-                    }
-                )
+        if order.get_raw_subtotal() < coupon.minimum_order_amount:
+            return JsonResponse(
+                {
+                    "error": f"The minimum order amount should be ${coupon.minimum_order_amount} for this coupon."
+                }
+            )
 
         order.coupon = coupon
         order.save()

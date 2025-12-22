@@ -12,9 +12,13 @@ User = get_user_model()
 class Address(models.Model):
     BILLING = 'B'
     SHIPPING = 'S'
+    HOME = 'H'
+    WORK = 'W'
     ADDRESS_CHOICES = (
         (BILLING, 'Billing'),
         (SHIPPING, 'Shipping'),
+        (HOME, 'Home'),
+        (WORK, 'Work'),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
