@@ -42,6 +42,7 @@ try:
           path('api/gallery/', include('galleryItem.urls')),
           path('api/cart/', include('cart.api_urls')),
           path('api/tax/', include('NEW_tax_calculator.api_urls')),
+          path('api/wholesale/', include('NEW_wholesale_discounts.api_urls')),
        ],
     )
     SWAGGER_AVAILABLE = True
@@ -55,6 +56,7 @@ urlpatterns = [
     path('api/gallery/', include('galleryItem.urls')),
     path('api/cart/', include('cart.api_urls')),
     path('api/tax/', include('NEW_tax_calculator.api_urls')),
+    path('api/wholesale/', include('NEW_wholesale_discounts.api_urls')),
 ]
 
 # Smart Selects URLs (required for chained foreign keys in admin)

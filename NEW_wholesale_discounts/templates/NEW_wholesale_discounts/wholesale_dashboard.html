@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_specific_title %} | Wholesale Dashboard{% endblock %}
+
+{% block page_specific_meta_tags %}
+    <meta name="robots" content="noindex"/>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Wholesale Dashboard</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Your Wholesale Status</h5>
+                                <div class="alert alert-success">
+                                    <strong>Active Wholesale Account</strong><br>
+                                    You have access to wholesale pricing and discounts.
+                                </div>
+                                
+                                {% if wholesale_profile.wholesale_tier %}
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title">Current Tier: {{ wholesale_profile.wholesale_tier.name }}</h6>
+                                            <p class="card-text">
+                                                <strong>Discount:</strong> 
+                                                {% if wholesale_profile.wholesale_tier.discount_percentage %}
+                                                    {{ wholesale_profile.wholesale_tier.discount_percentage }}% off
+                                                {% elif wholesale_profile.wholesale_tier.discount_amount %}
+                                                    ${{ wholesale_profile.wholesale_tier.discount_amount }} off
+                                                {% endif %}
+                                            </p>
+                                            <p class="card-text">
+                                                <strong>Minimum Order:</strong> ${{ wholesale_profile.wholesale_tier.min_order_amount }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if wholesale_profile.custom_discount_percentage %}
+                                    <div class="mt-3">
+                                        <h6>Custom Discount</h6>
+                                        <p class="text-success">{{ wholesale_profile.custom_discount_percentage }}% off all orders</p>
+                                    </div>
+                                {% elif wholesale_profile.custom_discount_amount %}
+                                    <div class="mt-3">
+                                        <h6>Custom Discount</h6>
+                                        <p class="text-success">${{ wholesale_profile.custom_discount_amount }} off all orders</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5>Available Tiers</h5>
+                                {% for tier in available_tiers %}
+                                    <div class="card mb-2">
+                                        <div class="card-body py-2">
+                                            <h6 class="card-title mb-1">{{ tier.name }}</h6>
+                                            <p class="card-text mb-1">
+                                                <small>
+                                                    <strong>Min Order:</strong> ${{ tier.min_order_amount }}
+                                                    {% if tier.max_order_amount %} - ${{ tier.max_order_amount }}{% endif %}
+                                                </small>
+                                            </p>
+                                            <p class="card-text mb-0">
+                                                <small class="text-success">
+                                                    <strong>Discount:</strong>
+                                                    {% if tier.discount_percentage %}
+                                                        {{ tier.discount_percentage }}% off
+                                                    {% elif tier.discount_amount %}
+                                                        ${{ tier.discount_amount }} off
+                                                    {% endif %}
+                                                </small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        {% if recent_orders %}
+                            <div class="mt-4">
+                                <h5>Recent Orders with Wholesale Discounts</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Order #</th>
+                                                <th>Date</th>
+                                                <th>Subtotal</th>
+                                                <th>Wholesale Discount</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for order in recent_orders %}
+                                                <tr>
+                                                    <td>#{{ order.id }}</td>
+                                                    <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                                    <td>${{ order.get_raw_subtotal }}</td>
+                                                    <td class="text-success">-${{ order.wholesale_discount }}</td>
+                                                    <td>${{ order.get_total }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{{ order.status|lower }}">
+                                                            {{ order.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mt-4 text-center">
+                            <a href="{% url 'shop' %}" class="btn btn-primary">
+                                Start Shopping with Wholesale Pricing
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_specific_title %} | Wholesale Account Request{% endblock %}
+
+{% block page_specific_meta_tags %}
+    <meta name="robots" content="noindex"/>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Wholesale Account Request</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">
+                            Apply for a wholesale account to access special pricing and discounts. 
+                            Your request will be reviewed by our team.
+                        </p>
+                        
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.business_name.id_for_label }}" class="form-label">
+                                            Business Name *
+                                        </label>
+                                        {{ form.business_name }}
+                                        {% if form.business_name.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.business_name.errors %}
+                                                    <small>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.business_type.id_for_label }}" class="form-label">
+                                            Business Type *
+                                        </label>
+                                        {{ form.business_type }}
+                                        {% if form.business_type.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.business_type.errors %}
+                                                    <small>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.expected_monthly_volume.id_for_label }}" class="form-label">
+                                            Expected Monthly Volume *
+                                        </label>
+                                        {{ form.expected_monthly_volume }}
+                                        {% if form.expected_monthly_volume.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.expected_monthly_volume.errors %}
+                                                    <small>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.tax_id.id_for_label }}" class="form-label">
+                                            Tax ID / EIN *
+                                        </label>
+                                        {{ form.tax_id }}
+                                        {% if form.tax_id.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.tax_id.errors %}
+                                                    <small>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.website.id_for_label }}" class="form-label">
+                                    Website (Optional)
+                                </label>
+                                {{ form.website }}
+                                {% if form.website.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.website.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.reason.id_for_label }}" class="form-label">
+                                    Reason for Wholesale Access *
+                                </label>
+                                {{ form.reason }}
+                                {% if form.reason.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.reason.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <label for="{{ form.documents.id_for_label }}" class="form-label">
+                                    Supporting Documents (Optional)
+                                </label>
+                                {{ form.documents }}
+                                {% if form.documents.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.documents.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    Upload business license, tax documents, or other supporting files (PDF, JPG, PNG, DOC, DOCX - max 10MB).
+                                </small>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'NEW_wholesale_discounts:wholesale_status' %}" class="btn btn-secondary me-md-2">
+                                    Check Status
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    Submit Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

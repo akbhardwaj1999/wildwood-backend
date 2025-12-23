@@ -329,7 +329,30 @@ def update_address_and_calculate_tax(request):
             order.total_shipping_cost = shipping_cost
             order.save(update_fields=['total_shipping_cost'])
         
-        # Calculate tax
+        # Apply wholesale discount if user is wholesale
+        wholesale_discount_percentage = None
+        try:
+            from NEW_wholesale_discounts.utils import NEW_apply_wholesale_discount_to_order
+            from NEW_wholesale_discounts.models import NEW_WholesaleDiscountConfig
+            wholesale_discount = NEW_apply_wholesale_discount_to_order(order)
+            order.wholesale_discount = wholesale_discount
+            order.save(update_fields=['wholesale_discount'])
+            
+            # Get discount percentage for display
+            if wholesale_discount > 0:
+                subtotal_before_discount = order.get_raw_subtotal()
+                config = NEW_WholesaleDiscountConfig.objects.filter(is_active=True).first()
+                if config and subtotal_before_discount > 0:
+                    wholesale_discount_percentage = float(config.get_discount_for_amount(subtotal_before_discount))
+        except Exception as e:
+            # If wholesale discount fails, set to 0
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Wholesale discount calculation failed: {str(e)}")
+            order.wholesale_discount = Decimal('0.00')
+            order.save(update_fields=['wholesale_discount'])
+        
+        # Calculate tax (on subtotal after wholesale discount)
         tax_amount, tax_rate_obj, is_exempt = NEW_calculate_tax_for_order(order)
         order.tax_amount = tax_amount
         order.is_tax_exempt = is_exempt
@@ -337,6 +360,7 @@ def update_address_and_calculate_tax(request):
         
         # Get order totals
         subtotal = float(order.get_raw_subtotal())
+        wholesale_discount_float = float(order.wholesale_discount)
         shipping_cost_float = float(shipping_cost)
         tax_amount_float = float(tax_amount)
         grand_total = float(order.get_total())
@@ -346,6 +370,8 @@ def update_address_and_calculate_tax(request):
             'success': True,
             'order_id': order.id,
             'subtotal': round(subtotal, 2),
+            'wholesale_discount': round(wholesale_discount_float, 2),
+            'wholesale_discount_percentage': round(wholesale_discount_percentage, 2) if wholesale_discount_percentage else None,
             'shipping_cost': round(shipping_cost_float, 2),
             'tax_amount': round(tax_amount_float, 2),
             'grand_total': round(grand_total, 2),

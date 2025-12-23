@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_specific_title %} | Wholesale Tiers{% endblock %}
+
+{% block page_specific_meta_tags %}
+    <meta name="robots" content="noindex"/>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Wholesale Pricing Tiers</h2>
+                    </div>
+                    <div class="card-body">
+                        {% if is_wholesale %}
+                            <div class="alert alert-success">
+                                <h4 class="alert-heading">Wholesale Access Active!</h4>
+                                <p class="mb-0">
+                                    You have wholesale access. The pricing below applies to your orders.
+                                </p>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <h4 class="alert-heading">Apply for Wholesale Access</h4>
+                                <p class="mb-0">
+                                    To access these wholesale prices, you need to apply for a wholesale account.
+                                    <a href="{% url 'NEW_wholesale_discounts:wholesale_request' %}" class="alert-link">Apply now</a>.
+                                </p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            {% for tier in tiers %}
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <div class="card h-100 {% if is_wholesale %}border-success{% endif %}">
+                                        <div class="card-header {% if is_wholesale %}bg-success text-white{% endif %}">
+                                            <h5 class="card-title mb-0">{{ tier.name }}</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="text-center mb-3">
+                                                <h3 class="text-primary">
+                                                    {% if tier.discount_percentage %}
+                                                        {{ tier.discount_percentage }}% OFF
+                                                    {% elif tier.discount_amount %}
+                                                        ${{ tier.discount_amount }} OFF
+                                                    {% endif %}
+                                                </h3>
+                                            </div>
+                                            
+                                            <ul class="list-unstyled">
+                                                <li class="mb-2">
+                                                    <strong>Minimum Order:</strong> ${{ tier.min_order_amount }}
+                                                </li>
+                                                {% if tier.max_order_amount %}
+                                                    <li class="mb-2">
+                                                        <strong>Maximum Order:</strong> ${{ tier.max_order_amount }}
+                                                    </li>
+                                                {% endif %}
+                                                <li class="mb-2">
+                                                    <strong>Priority:</strong> {{ tier.priority }}
+                                                </li>
+                                            </ul>
+                                            
+                                            {% if tier.max_order_amount %}
+                                                <div class="alert alert-light">
+                                                    <small>
+                                                        <strong>Note:</strong> This tier applies to orders between 
+                                                        ${{ tier.min_order_amount }} and ${{ tier.max_order_amount }}.
+                                                    </small>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-light">
+                                                    <small>
+                                                        <strong>Note:</strong> This tier applies to orders of 
+                                                        ${{ tier.min_order_amount }} or more.
+                                                    </small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-footer">
+                                            {% if is_wholesale %}
+                                                <span class="badge bg-success">Available to You</span>
+                                            {% else %}
+                                                <a href="{% url 'NEW_wholesale_discounts:wholesale_request' %}" class="btn btn-outline-primary btn-sm">
+                                                    Apply for Access
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="col-12">
+                                    <div class="alert alert-warning">
+                                        <h4 class="alert-heading">No Wholesale Tiers Available</h4>
+                                        <p class="mb-0">
+                                            There are currently no wholesale pricing tiers configured.
+                                            Please contact our team for more information.
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h4>How Wholesale Pricing Works</h4>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <div class="mb-3">
+                                            <i class="fas fa-user-check fa-3x text-primary"></i>
+                                        </div>
+                                        <h5>1. Apply for Access</h5>
+                                        <p class="text-muted">
+                                            Submit your business information and wait for approval.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <div class="mb-3">
+                                            <i class="fas fa-shopping-cart fa-3x text-primary"></i>
+                                        </div>
+                                        <h5>2. Meet Minimum Order</h5>
+                                        <p class="text-muted">
+                                            Add items to your cart to meet the minimum order requirement.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <div class="mb-3">
+                                            <i class="fas fa-percentage fa-3x text-primary"></i>
+                                        </div>
+                                        <h5>3. Get Discount</h5>
+                                        <p class="text-muted">
+                                            Automatic discount applied at checkout based on your tier.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 text-center">
+                            {% if is_wholesale %}
+                                <a href="{% url 'NEW_wholesale_discounts:wholesale_dashboard' %}" class="btn btn-primary me-3">
+                                    Go to Dashboard
+                                </a>
+                            {% else %}
+                                <a href="{% url 'NEW_wholesale_discounts:wholesale_request' %}" class="btn btn-primary me-3">
+                                    Apply for Wholesale Access
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'shop' %}" class="btn btn-outline-secondary">
+                                Continue Shopping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

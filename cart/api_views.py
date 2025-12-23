@@ -74,6 +74,24 @@ class CartView(generics.RetrieveAPIView):
             Prefetch('items', queryset=OrderItem.objects.select_related('variant', 'variant__product').all())
         ).get(id=order.id)
         
+        # Apply wholesale discount if user is authenticated and wholesale
+        if order.user and order.user.is_authenticated:
+            try:
+                from NEW_wholesale_discounts.utils import NEW_apply_wholesale_discount_to_order
+                wholesale_discount = NEW_apply_wholesale_discount_to_order(order)
+                order.wholesale_discount = wholesale_discount
+                order.save(update_fields=['wholesale_discount'])
+            except Exception as e:
+                # If wholesale discount fails, set to 0
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Wholesale discount calculation failed in CartView: {str(e)}")
+                order.wholesale_discount = Decimal('0.00')
+                order.save(update_fields=['wholesale_discount'])
+        else:
+            order.wholesale_discount = Decimal('0.00')
+            order.save(update_fields=['wholesale_discount'])
+        
         print(f"DEBUG CartView - Order ID: {order.id}, Items count: {order.items.count()}")
         
         return order

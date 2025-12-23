@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'galleryItem',
     'cart',
     'NEW_tax_calculator',
+    'NEW_wholesale_discounts',  # Wholesale discount system
 ]
 
 MIDDLEWARE = [

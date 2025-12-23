@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_specific_title %} | Wholesale Account Status{% endblock %}
+
+{% block page_specific_meta_tags %}
+    <meta name="robots" content="noindex"/>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Wholesale Account Status</h2>
+                    </div>
+                    <div class="card-body">
+                        {% if wholesale_profile %}
+                            <div class="alert alert-success">
+                                <h4 class="alert-heading">Wholesale Account Active!</h4>
+                                <p class="mb-0">
+                                    Your wholesale account is approved and active. 
+                                    You now have access to wholesale pricing and discounts.
+                                </p>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5>Account Details</h5>
+                                    <ul class="list-unstyled">
+                                        <li><strong>User:</strong> {{ wholesale_profile.user.username }}</li>
+                                        <li><strong>Status:</strong> 
+                                            <span class="badge bg-success">Approved</span>
+                                        </li>
+                                        {% if wholesale_profile.approved_at %}
+                                            <li><strong>Approved Date:</strong> {{ wholesale_profile.approved_at|date:"M d, Y" }}</li>
+                                        {% endif %}
+                                        {% if wholesale_profile.approved_by %}
+                                            <li><strong>Approved By:</strong> {{ wholesale_profile.approved_by.username }}</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            {% if wholesale_profile.wholesale_tier %}
+                                <div class="mt-4">
+                                    <h5>Your Wholesale Tier</h5>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ wholesale_profile.wholesale_tier.name }}</h6>
+                                            <p class="card-text">
+                                                <strong>Discount:</strong> 
+                                                {% if wholesale_profile.wholesale_tier.discount_percentage %}
+                                                    {{ wholesale_profile.wholesale_tier.discount_percentage }}% off
+                                                {% elif wholesale_profile.wholesale_tier.discount_amount %}
+                                                    ${{ wholesale_profile.wholesale_tier.discount_amount }} off
+                                                {% endif %}
+                                            </p>
+                                            <p class="card-text">
+                                                <strong>Minimum Order:</strong> ${{ wholesale_profile.wholesale_tier.min_order_amount }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if wholesale_profile.custom_discount_percentage or wholesale_profile.custom_discount_amount %}
+                                <div class="mt-4">
+                                    <h5>Custom Discount</h5>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            {% if wholesale_profile.custom_discount_percentage %}
+                                                <p class="card-text">
+                                                    <strong>Custom Discount:</strong> {{ wholesale_profile.custom_discount_percentage }}% off all orders
+                                                </p>
+                                            {% elif wholesale_profile.custom_discount_amount %}
+                                                <p class="card-text">
+                                                    <strong>Custom Discount:</strong> ${{ wholesale_profile.custom_discount_amount }} off all orders
+                                                </p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Wholesale Benefits Section - Moved to Bottom -->
+                            <div class="mt-4">
+                                <h5>Wholesale Benefits</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li>✓ Special wholesale pricing</li>
+                                            <li>✓ Tiered discount structure</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li>✓ Priority customer support</li>
+                                            <li>✓ Bulk order discounts</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        {% elif recent_requests %}
+                            {% for request in recent_requests %}
+                                {% if request.status == 'pending' %}
+                                    <div class="alert alert-warning">
+                                        <h4 class="alert-heading">Request Under Review</h4>
+                                        <p class="mb-0">
+                                            Your wholesale account request is currently under review. 
+                                            We'll notify you once it's processed.
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h5>Request Details</h5>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Business Name:</strong> {{ request.business_name }}</li>
+                                                <li><strong>Business Type:</strong> {{ request.business_type }}</li>
+                                                <li><strong>Status:</strong> 
+                                                    <span class="badge bg-warning">Pending</span>
+                                                </li>
+                                                <li><strong>Submitted:</strong> {{ request.created_at|date:"M d, Y" }}</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <h5>Next Steps</h5>
+                                        <ul class="list-unstyled">
+                                            <li>• Our team will review your application</li>
+                                            <li>• We may contact you for additional information</li>
+                                            <li>• You'll receive an email notification of the decision</li>
+                                            <li>• Processing typically takes 2-3 business days</li>
+                                        </ul>
+                                    </div>
+                                {% elif request.status == 'rejected' %}
+                                    <div class="alert alert-danger">
+                                        <h4 class="alert-heading">Request Rejected</h4>
+                                        <p class="mb-0">
+                                            Your wholesale account request has been rejected. 
+                                            You can submit a new request if you have additional information.
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h5>Request Details</h5>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Business Name:</strong> {{ request.business_name }}</li>
+                                                <li><strong>Business Type:</strong> {{ request.business_type }}</li>
+                                                <li><strong>Status:</strong> 
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                </li>
+                                                <li><strong>Submitted:</strong> {{ request.created_at|date:"M d, Y" }}</li>
+                                                {% if request.reviewed_at %}
+                                                    <li><strong>Reviewed:</strong> {{ request.reviewed_at|date:"M d, Y" }}</li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if request.admin_notes %}
+                                        <div class="mt-4">
+                                            <h5>Admin Notes</h5>
+                                            <p class="text-muted">{{ request.admin_notes }}</p>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                        {% else %}
+                            <div class="alert alert-info">
+                                <h4 class="alert-heading">No Wholesale Account</h4>
+                                <p class="mb-0">
+                                    You don't have a wholesale account yet. 
+                                    Apply now to access special pricing and discounts.
+                                </p>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <a href="{% url 'NEW_wholesale_discounts:wholesale_request' %}" class="btn btn-primary">
+                                    Apply for Wholesale Account
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mt-4 text-center">
+                            <a href="{% url 'shop' %}" class="btn btn-outline-secondary">
+                                Continue Shopping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
