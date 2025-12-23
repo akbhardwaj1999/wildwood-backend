@@ -2,7 +2,8 @@ from rest_framework import status, generics, permissions, filters
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.db.models import Q
+from rest_framework.views import APIView
+from django.db.models import Q, Sum, Count
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -687,4 +688,69 @@ class WishedItemDetailView(generics.RetrieveDestroyAPIView):
     )
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
+
+
+class StockStatusAPIView(APIView):
+    """
+    API to get stock status of all products/variants.
+    Returns products with their stock information.
+    """
+    permission_classes = [permissions.IsAdminUser]  # Only admins can view stock status
+    
+    def get(self, request):
+        """Get stock status for all variants"""
+        try:
+            # Get filter parameters
+            stock_filter = request.GET.get('filter', 'all')  # all, in_stock, out_of_stock, low_stock
+            category_id = request.GET.get('category', None)
+            search_query = request.GET.get('search', None)
+            
+            # Base queryset
+            variants = Variant.objects.select_related('product', 'product__category').all()
+            
+            # Apply filters
+            if category_id:
+                variants = variants.filter(product__category_id=category_id)
+            
+            if search_query:
+                variants = variants.filter(
+                    Q(product__title__icontains=search_query) |
+                    Q(title__icontains=search_query)
+                )
+            
+            # Stock status filter
+            if stock_filter == 'in_stock':
+                variants = variants.filter(quantity__gt=0)
+            elif stock_filter == 'out_of_stock':
+                variants = variants.filter(quantity=0)
+            elif stock_filter == 'low_stock':
+                variants = variants.filter(quantity__gt=0, quantity__lte=10)
+            
+            # Serialize data
+            serializer = VariantSerializer(variants, many=True, context={'request': request})
+            
+            # Calculate summary statistics
+            total_variants = Variant.objects.count()
+            in_stock_count = Variant.objects.filter(quantity__gt=0).count()
+            out_of_stock_count = Variant.objects.filter(quantity=0).count()
+            low_stock_count = Variant.objects.filter(quantity__gt=0, quantity__lte=10).count()
+            total_quantity = Variant.objects.aggregate(total=Sum('quantity'))['total'] or 0
+            
+            return Response({
+                'success': True,
+                'summary': {
+                    'total_variants': total_variants,
+                    'in_stock': in_stock_count,
+                    'out_of_stock': out_of_stock_count,
+                    'low_stock': low_stock_count,
+                    'total_quantity': total_quantity,
+                },
+                'variants': serializer.data,
+                'count': variants.count(),
+            })
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

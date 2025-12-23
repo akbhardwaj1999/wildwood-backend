@@ -218,6 +218,28 @@ class AddToCartSerializer(serializers.Serializer):
 class UpdateCartItemSerializer(serializers.Serializer):
     """Serializer for updating cart item quantity"""
     quantity = serializers.IntegerField(min_value=1)
+    
+    def validate(self, data):
+        """Validate that quantity doesn't exceed available stock"""
+        # Get the order_item from context (set in the view)
+        order_item = self.context.get('order_item')
+        if order_item:
+            variant = order_item.variant
+            requested_quantity = data.get('quantity', 1)
+            
+            # Check if variant is in stock
+            if variant.quantity <= 0:
+                raise serializers.ValidationError({
+                    'quantity': 'This variant is out of stock.'
+                })
+            
+            # Check if requested quantity exceeds available stock
+            if requested_quantity > variant.quantity:
+                raise serializers.ValidationError({
+                    'quantity': f'Only {variant.quantity} items available in stock. You cannot add more than the available quantity.'
+                })
+        
+        return data
 
 
 class ApplyCouponSerializer(serializers.Serializer):

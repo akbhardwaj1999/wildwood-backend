@@ -24,4 +24,7 @@ urlpatterns = [
     # Wishlist APIs
     path('wishlist/', views.WishedItemListView.as_view(), name='wishlist-list'),
     path('wishlist/<int:pk>/', views.WishedItemDetailView.as_view(), name='wishlist-detail'),
+    
+    # Stock Management API
+    path('stock-status/', views.StockStatusAPIView.as_view(), name='stock-status'),
 ]

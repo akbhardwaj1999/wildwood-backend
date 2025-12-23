@@ -222,12 +222,13 @@ def add_to_cart(request):
 @permission_classes([AllowAny])
 def update_cart_item(request, item_id):
     """Update cart item quantity"""
-    serializer = UpdateCartItemSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
     order = get_or_set_order_session(request)
     order_item = get_object_or_404(OrderItem, id=item_id, order=order)
+    
+    # Pass order_item to serializer context for stock validation
+    serializer = UpdateCartItemSerializer(data=request.data, context={'order_item': order_item})
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     order_item.quantity = serializer.validated_data['quantity']
     order_item.save()

@@ -161,6 +161,14 @@ class GalleryItemListSerializer(serializers.ModelSerializer):
         source='default_variant.image',
         read_only=True
     )
+    default_variant_quantity = serializers.IntegerField(
+        source='default_variant.quantity',
+        read_only=True
+    )
+    default_variant_in_stock = serializers.BooleanField(
+        source='default_variant.in_stock',
+        read_only=True
+    )
     average_rating = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
     
@@ -168,7 +176,8 @@ class GalleryItemListSerializer(serializers.ModelSerializer):
         model = GalleryItem
         fields = (
             'id', 'title', 'slug', 'description', 'category', 'category_title',
-            'default_variant_price', 'default_variant_image', 'active',
+            'default_variant_price', 'default_variant_image', 'default_variant_quantity',
+            'default_variant_in_stock', 'active',
             'total_views', 'average_rating', 'review_count', 'timeStamp', 'updated'
         )
         read_only_fields = ('id', 'slug', 'timeStamp', 'updated')
