@@ -40,9 +40,78 @@ class GalleryItemListView(generics.ListCreateAPIView):
     def get_queryset(self):
         """Filter queryset based on query parameters"""
         queryset = super().get_queryset()
-        category_id = self.request.query_params.get('category', None)
-        if category_id:
-            queryset = queryset.filter(category_id=category_id)
+        
+        # Support multiple category filters
+        category_ids = self.request.query_params.getlist('category')
+        
+        if category_ids:
+            valid_categories = []
+            for category_id in category_ids:
+                try:
+                    category = Category.objects.get(id=category_id)
+                    valid_categories.append(category)
+                except (Category.DoesNotExist, ValueError):
+                    # If category doesn't exist or invalid ID, skip it
+                    continue
+            
+            if not valid_categories:
+                # No valid categories found, return empty queryset
+                queryset = queryset.none()
+            elif len(valid_categories) == 1:
+                # Single category: get all descendants (including itself)
+                category = valid_categories[0]
+                descendant_ids = category.get_descendants(include_self=True).values_list('id', flat=True)
+                queryset = queryset.filter(category_id__in=descendant_ids)
+            else:
+                # Multiple categories: Check if they have parent-child relationship
+                # If parent-child: Use AND logic (intersection)
+                # If different/sibling categories: Use OR logic (union)
+                
+                # Check if any category is a descendant of another
+                has_parent_child_relationship = False
+                for i, cat1 in enumerate(valid_categories):
+                    for j, cat2 in enumerate(valid_categories):
+                        if i != j:
+                            # Check if cat1 is ancestor of cat2 or vice versa
+                            if cat1.is_ancestor_of(cat2) or cat2.is_ancestor_of(cat1):
+                                has_parent_child_relationship = True
+                                break
+                    if has_parent_child_relationship:
+                        break
+                
+                if has_parent_child_relationship:
+                    # Parent-child relationship: Use AND logic (intersection)
+                    # Find products that are in ALL selected category trees
+                    all_possible_ids = []
+                    for category in valid_categories:
+                        descendant_ids = category.get_descendants(include_self=True).values_list('id', flat=True)
+                        all_possible_ids.append(set(descendant_ids))
+                    
+                    # Find intersection - categories that are descendants of ALL selected categories
+                    if all_possible_ids:
+                        intersection_ids = set.intersection(*all_possible_ids)
+                        
+                        if intersection_ids:
+                            # Filter products that belong to categories in the intersection
+                            queryset = queryset.filter(category_id__in=intersection_ids)
+                        else:
+                            # No intersection - no products match all categories
+                            queryset = queryset.none()
+                    else:
+                        queryset = queryset.none()
+                else:
+                    # Different/sibling categories: Use OR logic (union)
+                    # Show products from ANY of the selected categories
+                    all_category_ids = set()
+                    for category in valid_categories:
+                        descendant_ids = category.get_descendants(include_self=True).values_list('id', flat=True)
+                        all_category_ids.update(descendant_ids)
+                    
+                    if all_category_ids:
+                        queryset = queryset.filter(category_id__in=all_category_ids)
+                    else:
+                        queryset = queryset.none()
+        
         return queryset
     
     def get_serializer_class(self):
