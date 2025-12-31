@@ -20,3 +20,9 @@ requests==2.32.5
 # Utilities
 python-dotenv==1.2.1
 
+# Rich Text Editor for Blog
+django-ckeditor==6.7.0
+
+# Tags for Blog Posts
+django-taggit==5.0.1
+

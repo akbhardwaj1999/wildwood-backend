@@ -43,6 +43,7 @@ try:
           path('api/cart/', include('cart.api_urls')),
           path('api/tax/', include('NEW_tax_calculator.api_urls')),
           path('api/wholesale/', include('NEW_wholesale_discounts.api_urls')),
+          path('api/blog/', include('blog.api_urls')),
        ],
     )
     SWAGGER_AVAILABLE = True
@@ -51,12 +52,15 @@ except ImportError:
     schema_view = None
 
 urlpatterns = [
+    path('ckeditor/', include('ckeditor_uploader.urls')),  # CKEditor image upload (must be before admin)
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/gallery/', include('galleryItem.urls')),
     path('api/cart/', include('cart.api_urls')),
     path('api/tax/', include('NEW_tax_calculator.api_urls')),
     path('api/wholesale/', include('NEW_wholesale_discounts.api_urls')),
+    path('api/blog/', include('blog.api_urls')),
+    path('api/contact/', include('contact.api_urls')),
 ]
 
 # Smart Selects URLs (required for chained foreign keys in admin)

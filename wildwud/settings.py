@@ -52,6 +52,11 @@ INSTALLED_APPS = [
     'cart',
     'NEW_tax_calculator',
     'NEW_wholesale_discounts',  # Wholesale discount system
+    'blog',  # Blog app for blog posts
+    'ckeditor',  # Rich text editor for blog content
+    'ckeditor_uploader',  # Image upload support for CKEditor
+    'taggit',  # Tags for blog posts
+    'contact',  # Contact form app
 ]
 
 MIDDLEWARE = [
@@ -277,5 +282,44 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@wildwud.com')
 
+# Admin email for contact form notifications
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', os.environ.get('DEFAULT_FROM_EMAIL', 'admin@wildwud.com'))
+
 # Frontend URL for password reset links
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+
+# CKEditor Configuration for Rich Text Editor
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_RESTRICT_BY_USER = False
+CKEDITOR_BROWSE_SHOW_DIRS = True
+CKEDITOR_ALLOW_NONIMAGE_FILES = False
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Format', 'Styles'],
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Flash', 'Table', 'HorizontalRule', 'SpecialChar'],
+            ['TextColor', 'BGColor'],
+            ['Maximize'],
+            ['Source'],
+        ],
+        'height': 400,
+        'width': '100%',
+        'filebrowserUploadUrl': '/ckeditor/upload/',
+        'filebrowserBrowseUrl': '/ckeditor/browse/',
+        'filebrowserImageUploadUrl': '/ckeditor/upload/',
+        'filebrowserImageBrowseUrl': '/ckeditor/browse/',
+        'uploadUrl': '/ckeditor/upload/',
+        'imageUploadUrl': '/ckeditor/upload/',
+        'removeDialogTabs': 'link:upload;image:upload',
+        'extraPlugins': ','.join([
+            'uploadimage',  # the upload image feature
+            'image2',  # responsive images
+        ]),
+    },
+}

@@ -121,3 +121,10 @@ class PasswordResetSerializer(serializers.Serializer):
             raise serializers.ValidationError({"confirm_password": "Password fields didn't match."})
         return attrs
 
+
+class ContactFormSerializer(serializers.Serializer):
+    """Serializer for contact form submission"""
+    name = serializers.CharField(required=True, max_length=200, help_text="Your full name")
+    email = serializers.EmailField(required=True, help_text="Your email address")
+    message = serializers.CharField(required=True, min_length=10, help_text="Your message (minimum 10 characters)")
+
