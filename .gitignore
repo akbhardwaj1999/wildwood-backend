@@ -33,6 +33,7 @@ db.sqlite3-journal
 # Media files (uploaded by users)
 media/
 products/
+staticfiles/
 
 
 # Environment variables
