@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     GalleryItem, Variant, Category, Review, WishedItem,
-    VariantImage, VariantVideo, VariantYoutubeVideo, SpecialPrice
+    VariantImage, VariantVideo, VariantYoutubeVideo, SpecialPrice,
+    Supply, VariantSupply, Supplier
 )
 
 User = get_user_model()
@@ -50,6 +51,68 @@ class VariantYoutubeVideoSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
+class SupplierSerializer(serializers.ModelSerializer):
+    """Serializer for Supplier model"""
+    
+    class Meta:
+        model = Supplier
+        fields = ('id', 'name', 'website', 'updated')
+        read_only_fields = ('id', 'updated')
+
+
+class SupplySerializer(serializers.ModelSerializer):
+    """Serializer for Supply model"""
+    supplier = SupplierSerializer(read_only=True)
+    supplier_id = serializers.PrimaryKeyRelatedField(
+        queryset=Supplier.objects.all(),
+        source='supplier',
+        write_only=True,
+        required=True
+    )
+    image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Supply
+        fields = (
+            'id', 'title', 'description', 'link', 'price', 'quantity',
+            'image', 'supplier', 'supplier_id', 'updated'
+        )
+        read_only_fields = ('id', 'updated')
+    
+    def get_image(self, obj):
+        """Return absolute URL for image"""
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            from django.conf import settings
+            return f"{settings.SITE_URL}{obj.image.url}" if hasattr(settings, 'SITE_URL') else obj.image.url
+        return None
+
+
+class VariantSupplySerializer(serializers.ModelSerializer):
+    """Serializer for VariantSupply model"""
+    supply = SupplySerializer(read_only=True)
+    supply_id = serializers.PrimaryKeyRelatedField(
+        queryset=Supply.objects.all(),
+        source='supply',
+        write_only=True,
+        required=True
+    )
+    total_cost = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = VariantSupply
+        fields = (
+            'id', 'variant', 'supply', 'supply_id', 'quantity_required', 'total_cost'
+        )
+        read_only_fields = ('id',)
+    
+    def get_total_cost(self, obj):
+        """Calculate total cost for this supply"""
+        return float(obj.get_supply_required_cost_to_manufacturer())
+
+
 class VariantSerializer(serializers.ModelSerializer):
     """Serializer for Variant model"""
     images = VariantImageSerializer(source='variantimage_set', many=True, read_only=True)
@@ -58,13 +121,14 @@ class VariantSerializer(serializers.ModelSerializer):
     in_stock = serializers.ReadOnlyField()
     image = serializers.SerializerMethodField()
     largeImage = serializers.SerializerMethodField()
+    supplies = serializers.SerializerMethodField()
     
     class Meta:
         model = Variant
         fields = (
             'id', 'product', 'image', 'largeImage', 'title', 'price', 
             'quantity', 'volume', 'weight', 'is_best_seller', 'active',
-            'in_stock', 'images', 'videos', 'youtube_videos', 'updated'
+            'in_stock', 'images', 'videos', 'youtube_videos', 'supplies', 'updated'
         )
         read_only_fields = ('id', 'updated')
     
@@ -89,6 +153,29 @@ class VariantSerializer(serializers.ModelSerializer):
             from django.conf import settings
             return f"{settings.SITE_URL}{obj.largeImage.url}" if hasattr(settings, 'SITE_URL') else obj.largeImage.url
         return None
+    
+    def get_supplies(self, obj):
+        """
+        Get supplies for this variant (ONLY for superuser/admin users).
+        Each variant has its own supplies, so each product will show different supplies.
+        """
+        request = self.context.get('request')
+        
+        # STRICT SECURITY CHECK: Only return supplies for authenticated superusers
+        if not request:
+            return []
+        
+        # Check if user is authenticated
+        if not hasattr(request, 'user') or not request.user.is_authenticated:
+            return []
+        
+        # STRICT CHECK: Only superuser can see supplies
+        if not request.user.is_superuser:
+            return []
+        
+        # Get supplies for THIS specific variant (each variant has different supplies)
+        variant_supplies = obj.variantsupply_set.select_related('supply', 'supply__supplier').all()
+        return VariantSupplySerializer(variant_supplies, many=True, context=self.context).data
 
 
 class VariantCreateUpdateSerializer(serializers.ModelSerializer):
@@ -157,10 +244,7 @@ class GalleryItemListSerializer(serializers.ModelSerializer):
         decimal_places=2, 
         read_only=True
     )
-    default_variant_image = serializers.ImageField(
-        source='default_variant.image',
-        read_only=True
-    )
+    default_variant_image = serializers.SerializerMethodField()
     default_variant_quantity = serializers.IntegerField(
         source='default_variant.quantity',
         read_only=True
@@ -171,6 +255,17 @@ class GalleryItemListSerializer(serializers.ModelSerializer):
     )
     average_rating = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
+    
+    def get_default_variant_image(self, obj):
+        """Return absolute URL for default variant image"""
+        if obj.default_variant and obj.default_variant.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.default_variant.image.url)
+            # Fallback: use settings if no request context
+            from django.conf import settings
+            return f"{settings.SITE_URL}{obj.default_variant.image.url}" if hasattr(settings, 'SITE_URL') else obj.default_variant.image.url
+        return None
     
     class Meta:
         model = GalleryItem
@@ -210,6 +305,8 @@ class GalleryItemDetailSerializer(serializers.ModelSerializer):
     reviews = ReviewSerializer(many=True, read_only=True)
     average_rating = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
+    admin_info = serializers.SerializerMethodField()
+    related_products = serializers.SerializerMethodField()
     
     class Meta:
         model = GalleryItem
@@ -217,7 +314,8 @@ class GalleryItemDetailSerializer(serializers.ModelSerializer):
             'id', 'category', 'category_id', 'title', 'slug', 'description',
             'default_variant', 'variants', 'active', 'timeStamp', 'updated',
             'total_views', 'metaKeyWords', 'metaKeyDescription',
-            'google_product_category', 'reviews', 'average_rating', 'review_count'
+            'google_product_category', 'reviews', 'average_rating', 'review_count',
+            'admin_info', 'related_products'
         )
         read_only_fields = ('id', 'slug', 'timeStamp', 'updated', 'total_views')
     
@@ -233,6 +331,94 @@ class GalleryItemDetailSerializer(serializers.ModelSerializer):
     def get_review_count(self, obj):
         """Get total review count"""
         return obj.reviews.count()
+    
+    def get_admin_info(self, obj):
+        """
+        Get admin-specific information (manufacturing cost, profit, shipping charges)
+        ONLY for superuser/admin users. Each product has its own admin_info based on its variants and supplies.
+        """
+        request = self.context.get('request')
+        
+        # STRICT SECURITY CHECK: Only return admin_info for authenticated superusers
+        if not request:
+            return None
+        
+        # Check if user is authenticated
+        if not hasattr(request, 'user') or not request.user.is_authenticated:
+            return None
+        
+        # STRICT CHECK: Only superuser can see admin info
+        if not request.user.is_superuser:
+            return None
+        
+        # Get default variant or first variant
+        variant = obj.default_variant or obj.variant_set.first()
+        if not variant:
+            return None
+        
+        admin_info = {}
+        
+        # Calculate manufacturing cost and profit for THIS product's variant
+        # Each product will have different manufacturing cost based on its supplies
+        variant_supplies = variant.variantsupply_set.select_related('supply', 'supply__supplier').all()
+        total_manufacturing_cost = sum(
+            float(vs.get_supply_required_cost_to_manufacturer()) 
+            for vs in variant_supplies
+        )
+        
+        # Each product's profit is calculated based on its variant price and manufacturing cost
+        admin_info['manufacturing_cost'] = round(total_manufacturing_cost, 2)
+        admin_info['profit'] = round(float(variant.price) - total_manufacturing_cost, 2)
+        
+        # Calculate shipping charges for different shipment types
+        # Shipping charges are calculated based on THIS variant's volume/weight
+        # So each product will have different shipping charges
+        from cart.models import ShippingCost
+        from cart.utils import calculate_item_shipping_charges
+        
+        shipping_info = {}
+        shipment_types = [
+            ('international', ShippingCost.INTERNATIONAL),
+            ('other_state', ShippingCost.OTHER_STATE),
+            ('other_city', ShippingCost.OTHER_CITY),
+            ('local', ShippingCost.LOCAL),
+        ]
+        
+        for name, shipment_type in shipment_types:
+            try:
+                qs = ShippingCost.objects.filter(shipment_type=shipment_type)
+                charges = calculate_item_shipping_charges(qs, variant)
+                shipping_info[name] = round(float(charges), 2) if charges else None
+            except Exception as e:
+                shipping_info[name] = None
+                shipping_info[f'{name}_error'] = str(e)
+        
+        admin_info['shipping_charges'] = shipping_info
+        
+        return admin_info
+    
+    def get_related_products(self, obj):
+        """
+        Get related products from the same category.
+        Excludes current product and limits to 4 products.
+        Only returns products that have a default_variant (to avoid errors).
+        """
+        # Get products from the same category, excluding current product
+        # Filter only products that have a default_variant
+        related = GalleryItem.objects.filter(
+            category=obj.category,
+            active=True,
+            default_variant__isnull=False  # Only products with default_variant
+        ).exclude(
+            id=obj.id
+        ).select_related(
+            'default_variant', 'category'
+        ).prefetch_related(
+            'reviews'
+        )[:4]  # Limit to 4 related products only
+        
+        # Use GalleryItemListSerializer for consistent format
+        return GalleryItemListSerializer(related, many=True, context=self.context).data
 
 
 class GalleryItemCreateUpdateSerializer(serializers.ModelSerializer):

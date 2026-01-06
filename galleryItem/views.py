@@ -170,6 +170,7 @@ class GalleryItemDetailView(generics.RetrieveUpdateDestroyAPIView):
         'variant_set__variantimage_set',
         'variant_set__variantvideo_set',
         'variant_set__variantyoutubevideo_set',
+        'variant_set__variantsupply_set__supply__supplier',
         'reviews'
     )
     lookup_field = 'pk'
@@ -251,6 +252,7 @@ class GalleryItemBySlugView(generics.RetrieveAPIView):
     Retrieve a gallery item by slug.
     
     GET: Get detailed information about a gallery item using its slug.
+    Includes related products from the same category.
     """
     queryset = GalleryItem.objects.filter(active=True).select_related(
         'category', 'default_variant', 'google_product_category'
@@ -258,6 +260,7 @@ class GalleryItemBySlugView(generics.RetrieveAPIView):
         'variant_set__variantimage_set',
         'variant_set__variantvideo_set',
         'variant_set__variantyoutubevideo_set',
+        'variant_set__variantsupply_set__supply__supplier',
         'reviews'
     )
     serializer_class = GalleryItemDetailSerializer
@@ -265,10 +268,12 @@ class GalleryItemBySlugView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     
     def retrieve(self, request, *args, **kwargs):
-        """Increment view count when retrieving"""
+        """Increment view count when retrieving and return with related products"""
         instance = self.get_object()
         instance.total_views += 1
         instance.save(update_fields=['total_views'])
+        
+        # Get response from parent class (related products are included in serializer)
         return super().retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(

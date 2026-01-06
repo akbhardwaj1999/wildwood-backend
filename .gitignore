@@ -51,3 +51,20 @@ staticfiles/
 .DS_Store
 Thumbs.db
 
+
+cd F:\wildwud-backend
+
+# Install packages
+pip install django-ckeditor django-taggit
+
+# Create migrations
+python manage.py makemigrations blog
+
+# Run migrations
+python manage.py migrate blog
+
+# Collect static files
+python manage.py collectstatic --noinput
+
+# Restart server
+python manage.py runserver
