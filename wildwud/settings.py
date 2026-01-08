@@ -288,6 +288,9 @@ ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', os.environ.get('DEFAULT_FROM_EMAIL',
 # Frontend URL for password reset links
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
 
+# Site URL for email links (abandoned cart recovery, etc.)
+SITE_URL = os.environ.get('SITE_URL', 'http://localhost:3000')
+
 # CKEditor Configuration for Rich Text Editor
 CKEDITOR_UPLOAD_PATH = "uploads/"
 CKEDITOR_RESTRICT_BY_USER = False

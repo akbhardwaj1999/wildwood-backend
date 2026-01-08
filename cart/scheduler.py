@@ -4,6 +4,7 @@ Runs every hour to check for abandoned carts and send reminder emails
 """
 
 import logging
+import os
 from datetime import timedelta
 from django.utils import timezone
 from django.core.mail import EmailMultiAlternatives
@@ -139,7 +140,9 @@ def send_abandoned_cart_emails():
                 
                 # Prepare email context with cart recovery link
                 # Use order reference number to restore cart session
-                cart_recovery_url = f"{settings.SITE_URL}/cart/recover/{order.reference_number}/"
+                # Frontend URL format: /cart/recover/[reference_number]
+                frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+                cart_recovery_url = f"{frontend_url}/cart/recover/{order.reference_number}"
                 
                 context = {
                     'user': order.user,
@@ -169,7 +172,6 @@ def send_abandoned_cart_emails():
                 
                 # Attach product images inline (for better email client compatibility)
                 try:
-                    import os
                     for idx, item in enumerate(fresh_items):
                         if item.variant.image:
                             # Read image file

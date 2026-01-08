@@ -40,6 +40,7 @@ from .serializers import (
 from .utils import get_or_set_order_session, calculate_total_shipping_cost
 from galleryItem.models import Variant
 from django.conf import settings
+from django.utils import timezone
 
 
 class CartView(generics.RetrieveAPIView):
@@ -1030,3 +1031,84 @@ def process_payment(request):
         'payment': payment_serializer.data,
         'order': OrderSerializer(order).data
     }, status=status.HTTP_200_OK if payment_successful else status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(
+    method='post',
+    operation_description="Recover abandoned cart using reference number from email link",
+    responses={
+        200: openapi.Response('Success', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                'cart': OrderSerializer,
+                'order_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            }
+        )),
+        404: 'Cart not found or already finalized',
+    },
+    tags=['Cart']
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def recover_cart(request, reference_number):
+    """
+    Recover abandoned cart from email link
+    Restores cart session using order reference number
+    When user clicks recovery link, delays the next abandoned cart email
+    """
+    try:
+        # Find the order by reference number
+        order = Order.objects.get(
+            reference_number=reference_number,
+            ordered=False  # Only recover non-finalized orders
+        )
+        
+        # IMPORTANT: If user clicks recovery link, delay the next email
+        # Update start_date to current time (this delays next email check)
+        # Keep abandoned_email_count as is (don't reset completely)
+        if order.abandoned_email_count > 0:
+            current_time = timezone.now()
+            # Update start_date to delay next email, but keep email_count
+            # This way, if 1st email was sent, next email (2nd) will be delayed
+            Order.objects.filter(id=order.id).update(
+                start_date=current_time,
+                last_updated=current_time,
+                recovery_link_clicked_at=current_time,
+            )
+            order.refresh_from_db()
+        
+        # Set order ID in session to restore cart
+        request.session['order_id'] = order.id
+        request.session.modified = True
+        request.session.save()
+        
+        # Also set in response headers for frontend localStorage
+        response = Response({
+            'message': f'Cart restored successfully! Your cart has {order.items.count()} item(s).',
+            'cart': OrderSerializer(order, context={'request': request}).data,
+            'order_id': order.id,
+        }, status=status.HTTP_200_OK)
+        
+        # Set cookie for session persistence
+        response.set_cookie(
+            'order_id',
+            str(order.id),
+            max_age=60 * 60 * 24 * 7,  # 7 days
+            httponly=False,  # Allow JavaScript access for localStorage
+            samesite='Lax'
+        )
+        
+        return response
+        
+    except Order.DoesNotExist:
+        return Response({
+            'error': 'This cart link is invalid or has expired. The cart may have been completed or removed.'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error recovering cart: {str(e)}")
+        return Response({
+            'error': 'An error occurred while recovering your cart. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

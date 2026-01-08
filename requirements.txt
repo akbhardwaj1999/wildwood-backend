@@ -26,3 +26,6 @@ django-ckeditor==6.7.0
 # Tags for Blog Posts
 django-taggit==5.0.1
 
+# Task Scheduler for Abandoned Cart Emails
+apscheduler==3.11.2
+

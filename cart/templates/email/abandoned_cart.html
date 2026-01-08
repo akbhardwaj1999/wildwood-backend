@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You Left Items in Your Cart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #8B4513;
+        }
+        .header h1 {
+            color: #8B4513;
+            margin: 0;
+            font-size: 28px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin: 20px 0;
+            color: #333;
+        }
+        .cart-item {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            background-color: #fafafa;
+        }
+        .cart-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 15px;
+        }
+        .cart-item-details {
+            flex: 1;
+        }
+        .cart-item-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .cart-item-price {
+            color: #8B4513;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        .cart-item-quantity {
+            color: #666;
+            font-size: 14px;
+        }
+        .total-section {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: right;
+        }
+        .total-label {
+            font-size: 18px;
+            color: #666;
+        }
+        .total-amount {
+            font-size: 28px;
+            font-weight: bold;
+            color: #8B4513;
+            margin-top: 5px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #8B4513;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 15px 40px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            background-color: #6d3410;
+        }
+        .cta-container {
+            text-align: center;
+        }
+        .discount-box {
+            background-color: #fffbea;
+            border: 2px dashed #f0ad4e;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .discount-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #8B4513;
+            letter-spacing: 2px;
+            background-color: #fff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 14px;
+        }
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
+        @media only screen and (max-width: 600px) {
+            .cart-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            .cart-item img {
+                margin: 0 0 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>🛒 WildWud</h1>
+        </div>
+        
+        <div class="greeting">
+            Hi {{ first_name }},
+        </div>
+        
+        <div class="message">
+            {% if reminder_number == 1 %}
+                <p>We noticed you left <strong>{{ cart_count }}</strong> item{% if cart_count != 1 %}s{% endif %} in your cart. Don't worry - we've saved them for you!</p>
+            {% elif reminder_number == 2 %}
+                <p>Your cart items are still waiting for you! These beautiful handcrafted pieces won't last long.</p>
+            {% else %}
+                <p>This is your last reminder! We've added a special discount just for you. Don't miss out on these amazing items!</p>
+            {% endif %}
+        </div>
+        
+        <div style="margin: 30px 0;">
+            {% for item in cart_items %}
+            <div class="cart-item">
+                {% if item.image_url %}
+                <!-- Try inline image first (CID), fallback to URL -->
+                <img src="cid:product_image_{{ forloop.counter0 }}" 
+                     onerror="this.onerror=null; this.src='{{ item.image_url }}';" 
+                     alt="{{ item.product.title }}">
+                {% else %}
+                <div style="width: 100px; height: 100px; background: #ddd; border-radius: 4px; margin-right: 15px;"></div>
+                {% endif %}
+                <div class="cart-item-details">
+                    <div class="cart-item-title">{{ item.product.title }}</div>
+                    {% if item.variant.title != 'Default' %}
+                    <div class="cart-item-price">Variant: {{ item.variant.title }}</div>
+                    {% endif %}
+                    <div class="cart-item-price">${{ item.price }}</div>
+                    <div class="cart-item-quantity">Quantity: {{ item.quantity }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="total-section">
+            <div class="total-label">Cart Total:</div>
+            <div class="total-amount">${{ total_amount }}</div>
+        </div>
+        
+        {% if discount_code %}
+        <div class="discount-box">
+            <p style="margin: 0 0 10px 0; font-size: 16px; color: #333;">
+                🎁 <strong>Special Offer Just For You!</strong>
+            </p>
+            <p style="margin: 0 0 10px 0; color: #666;">Use this code at checkout:</p>
+            <div class="discount-code">{{ discount_code }}</div>
+            <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">Save 10% on your order!</p>
+        </div>
+        {% endif %}
+        
+        <div class="cta-container">
+            <a href="{{ checkout_url }}" class="cta-button">Complete Your Purchase</a>
+        </div>
+        
+        <div class="message" style="text-align: center; color: #666;">
+            <p>Or <a href="{{ cart_url }}" style="color: #8B4513;">view your cart</a> to make changes.</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>WildWud</strong> - Handcrafted Wood Art</p>
+            <p>Questions? Reply to this email or contact us at support@wildwud.com</p>
+            <p style="font-size: 12px; color: #999; margin-top: 15px;">
+                You're receiving this email because you have items in your cart. 
+                If you've already completed your purchase, please disregard this message.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -32,4 +32,7 @@ urlpatterns = [
     
     # Payment operations
     path('payment/process/', api_views.process_payment, name='process-payment'),
+    
+    # Cart recovery (for abandoned cart emails)
+    path('recover/<str:reference_number>/', api_views.recover_cart, name='recover-cart'),
 ]
