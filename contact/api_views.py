@@ -75,7 +75,6 @@ Please reply directly to {contact_message.email} to respond.
             email_sent = True
     except Exception as e:
         email_error = str(e)
-        print(f"Error sending contact form email: {e}")
     
     # Send confirmation email to user
     user_confirmation_sent = False
@@ -104,7 +103,7 @@ Wild Wud Team
             )
             user_confirmation_sent = True
     except Exception as e:
-        print(f"Error sending confirmation email to user: {e}")
+        pass
     
     # Return response
     if email_sent:

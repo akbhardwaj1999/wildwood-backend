@@ -281,6 +281,14 @@ class Coupon(models.Model):
     discount_type = models.CharField(choices=DiscountType.choices, max_length=15)
     minimum_order_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     single_use_per_user = models.BooleanField()
+    created_for_user = models.ForeignKey(
+        'auth.User',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='coupons',
+        help_text='If set, only this user can use this coupon'
+    )
     active = models.BooleanField(default=True)
 
     def __str__(self):

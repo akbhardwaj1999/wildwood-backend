@@ -61,7 +61,34 @@ class UserRegistrationView(generics.CreateAPIView):
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
         
-        # Send welcome email
+        # Create unique coupon code for this user
+        import secrets
+        from decimal import Decimal
+        from cart.models import Coupon
+        
+        coupon_code = f"WELCOME20_{user.id}_{secrets.token_urlsafe(6).upper()}"
+        
+        # Create 20% discount coupon for this user
+        try:
+            coupon = Coupon.objects.create(
+                title=f'Welcome Discount for {user.username}',
+                description='20% off on your first purchase as a welcome gift!',
+                code=coupon_code,
+                discount=Decimal('20.00'),
+                discount_type=Coupon.DiscountType.PERCENTAGE,
+                minimum_order_amount=Decimal('0.00'),
+                single_use_per_user=True,
+                created_for_user=user,  # Link to specific user
+                active=True
+            )
+        except Exception as e:
+            # If coupon creation fails, log error and continue without coupon
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to create welcome coupon for user {user.id}: {str(e)}")
+            coupon_code = None
+        
+        # Send welcome email with coupon code
         try:
             # Clean and validate FROM email address
             from_email = settings.DEFAULT_FROM_EMAIL
@@ -71,7 +98,9 @@ class UserRegistrationView(generics.CreateAPIView):
             
             if from_email and '@' in from_email:
                 subject = 'Welcome to Wild Wud!'
-                message = f"""
+                
+                if coupon_code:
+                    message = f"""
 Hello {user.first_name or user.username},
 
 Welcome to Wild Wud! We're excited to have you join our community of unique woodcraft enthusiasts.
@@ -80,7 +109,28 @@ Your account has been successfully created:
 - Username: {user.username}
 - Email: {user.email}
 
-As a thank you for registering, you'll receive 10% off on your first purchase!
+As a thank you for registering, you'll receive 20% off on your first purchase!
+
+🎁 Your exclusive coupon code: {coupon_code}
+
+Use this code at checkout to get 20% discount on your first order.
+
+Start exploring our unique handcrafted wooden products and discover something special for your home.
+
+Best regards,
+Wild Wud Team
+"""
+                else:
+                    message = f"""
+Hello {user.first_name or user.username},
+
+Welcome to Wild Wud! We're excited to have you join our community of unique woodcraft enthusiasts.
+
+Your account has been successfully created:
+- Username: {user.username}
+- Email: {user.email}
+
+As a thank you for registering, you'll receive 20% off on your first purchase!
 
 Start exploring our unique handcrafted wooden products and discover something special for your home.
 
@@ -96,10 +146,10 @@ Wild Wud Team
                 )
         except Exception as e:
             # Log error but don't fail registration
-            print(f"Error sending welcome email: {e}")
+            pass
         
         return Response({
-            'message': 'User registered successfully. Welcome email has been sent.',
+            'message': 'User registered successfully. Welcome email with coupon code has been sent.',
             'user': UserSerializer(user).data,
             'access_token': str(refresh.access_token),  # Only access token (valid for 30 days)
         }, status=status.HTTP_201_CREATED)
@@ -406,7 +456,6 @@ Wild Wud Team
     
     # Validate email format
     if not from_email or '@' not in from_email:
-        print(f"Invalid FROM email address: {from_email}")
         return Response({
             'error': 'Email configuration error. Please contact support.',
             'success': False
@@ -428,8 +477,6 @@ Wild Wud Team
     except Exception as e:
         # Log error for debugging
         import traceback
-        print(f"Error sending password reset email: {e}")
-        print(traceback.format_exc())
         
         # Return specific error message based on error type
         error_message = 'Failed to send email. Please check your email configuration or try again later.'

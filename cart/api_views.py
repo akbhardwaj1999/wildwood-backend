@@ -57,11 +57,6 @@ class CartView(generics.RetrieveAPIView):
         from django.db.models import Prefetch
         from django.conf import settings
         
-        # Debug: Log session info
-        session_key = self.request.session.session_key
-        order_id = self.request.session.get('order_id', None)
-        print(f"DEBUG CartView - Session key: {session_key}, Order ID from session: {order_id}")
-        
         order = get_or_set_order_session(self.request)
         
         # Ensure session is saved
@@ -91,8 +86,6 @@ class CartView(generics.RetrieveAPIView):
         else:
             order.wholesale_discount = Decimal('0.00')
             order.save(update_fields=['wholesale_discount'])
-        
-        print(f"DEBUG CartView - Order ID: {order.id}, Items count: {order.items.count()}")
         
         return order
     
@@ -637,6 +630,11 @@ def apply_coupon(request):
     code = serializer.validated_data['code']
     order = get_or_set_order_session(request)
     
+    # Ensure order is linked to authenticated user
+    if hasattr(request.user, 'is_authenticated') and request.user.is_authenticated and order.user != request.user:
+        order.user = request.user
+        order.save(update_fields=['user'])
+    
     # Check if wholesale discount exists
     if order.wholesale_discount > 0:
         return Response({
@@ -650,14 +648,37 @@ def apply_coupon(request):
             'error': 'Coupon code is invalid.'
         }, status=status.HTTP_400_BAD_REQUEST)
     
+    # Get authenticated user - check both request.user and order.user
+    # order.user is set by get_or_set_order_session when user is authenticated
+    user = None
+    if hasattr(request.user, 'is_authenticated') and request.user.is_authenticated:
+        user = request.user
+    elif order.user and hasattr(order.user, 'is_authenticated') and order.user.is_authenticated:
+        user = order.user
+    
+    # IMPORTANT: Check if coupon is created for specific user
+    if coupon.created_for_user:
+        # This coupon is user-specific
+        if not user:
+            return Response({
+                'error': 'Please login to use this coupon.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Only the user for whom coupon was created can use it
+        if coupon.created_for_user != user:
+            return Response({
+                'error': 'This coupon is not valid for your account.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
     # Check single use per user
     if coupon.single_use_per_user:
-        if not request.user.is_authenticated:
+        if not user:
             return Response({
                 'error': 'Please login to apply for this coupon.'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        if Order.objects.filter(user=request.user, coupon=coupon).exclude(
+        # Check if user has already used this coupon
+        if Order.objects.filter(user=user, coupon=coupon).exclude(
             status=Order.NOT_FINALIZED
         ).exists():
             return Response({

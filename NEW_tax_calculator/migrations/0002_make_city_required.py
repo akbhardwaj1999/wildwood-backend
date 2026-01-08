@@ -7,8 +7,7 @@ import smart_selects.db_fields
 def delete_tax_rates_without_city(apps, schema_editor):
     """Delete tax rates that don't have a city (city is now required)"""
     NEW_TaxRate = apps.get_model('NEW_tax_calculator', 'NEW_TaxRate')
-    deleted_count = NEW_TaxRate.objects.filter(city__isnull=True).delete()[0]
-    print(f'Deleted {deleted_count} tax rates without city (city is now required)')
+    NEW_TaxRate.objects.filter(city__isnull=True).delete()
 
 
 def reverse_delete(apps, schema_editor):

@@ -73,7 +73,7 @@ def NEW_apply_wholesale_discount_to_order(order):
                 )
         except Exception as e:
             # Log error but don't break the order
-            print(f"Error creating wholesale discount record: {e}")
+            pass
     
     return discount_amount
 

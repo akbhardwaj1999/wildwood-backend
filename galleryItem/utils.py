@@ -82,7 +82,6 @@ def import_products_from_json_data(json_data):
     
     # If json_data is not a list, try to handle it
     if not isinstance(json_data, list):
-        print(f"ERROR: JSON data is not a list! Type: {type(json_data)}")
         return stats
     
     for idx, product_data in enumerate(json_data):
@@ -192,13 +191,12 @@ def import_products_from_json_data(json_data):
                                     continue
                         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
                             if attempt < max_retries - 1:
-                                print(f"Attempt {attempt + 1} failed for {images[0]}, retrying in {retry_delay * (attempt + 1)}s...")
                                 time.sleep(retry_delay * (attempt + 1))
                                 continue
                             else:
                                 raise e
                 except Exception as e:
-                    print(f"Error downloading first image {images[0]}: {e}")
+                    pass
             
             # Create placeholder image if no images available
             if not first_image_content:
@@ -211,14 +209,12 @@ def import_products_from_json_data(json_data):
                     img_io.seek(0)
                     first_image_content = ContentFile(img_io.read(), name='placeholder.jpg')
                     first_image_filename = f"product_{product.id}_placeholder.jpg"
-                    print(f"Warning: No images found for product '{title}', using placeholder")
                 except ImportError:
                     # If PIL not available, create a minimal JPEG placeholder manually
                     # Minimal valid JPEG (1x1 white pixel)
                     minimal_jpeg = b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xdb\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\' ",#\x1c\x1c(7),01444\x1f\'9=82<.342\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x01\x01\x11\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00\x3f\x00\xaa\xff\xd9'
                     first_image_content = ContentFile(minimal_jpeg, name='placeholder.jpg')
                     first_image_filename = f"product_{product.id}_placeholder.jpg"
-                    print(f"Warning: No images found for product '{title}', using minimal placeholder")
             
             # Create variant with first image
             variant = Variant(
@@ -268,13 +264,12 @@ def import_products_from_json_data(json_data):
                                     continue
                         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
                             if attempt < max_retries - 1:
-                                print(f"Attempt {attempt + 1} failed for {image_url}, retrying in {retry_delay * (attempt + 1)}s...")
                                 time.sleep(retry_delay * (attempt + 1))
                                 continue
                             else:
                                 raise e
                 except Exception as e:
-                    print(f"Error downloading image {image_url}: {e}")
+                    pass
             
             # Import reviews (handle both formats)
             from django.utils import timezone
@@ -319,9 +314,6 @@ def import_products_from_json_data(json_data):
             stats['created'] += 1
             
         except Exception as e:
-            import traceback
-            print(f"ERROR importing product {product_data.get('title', 'Unknown')}: {e}")
-            print(f"Traceback: {traceback.format_exc()}")
             stats['errors'] += 1
     
     return stats

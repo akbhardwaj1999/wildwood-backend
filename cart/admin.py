@@ -123,7 +123,8 @@ class CouponAdmin(admin.ModelAdmin):
         'discount_type',
         'minimum_order_amount',
         'single_use_per_user',
+        'created_for_user',
         'active',
     ]
-    list_filter = ['discount_type', 'active', 'single_use_per_user']
+    list_filter = ['discount_type', 'active', 'single_use_per_user', 'created_for_user']
     search_fields = ['title', 'code', 'description']

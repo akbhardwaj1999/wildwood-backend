@@ -164,8 +164,6 @@ def NEW_create_default_tax_rates():
     
     # Get or create United States country
     country, created = Country.objects.get_or_create(name="United States")
-    if created:
-        print(f"Created country: {country.name}")
     
     # Default tax rates for US states
     state_rates = {
@@ -188,8 +186,6 @@ def NEW_create_default_tax_rates():
             name=state_name,
             country=country
         )
-        if created:
-            print(f"Created state: {state.name}")
         
         # Create state-level tax rate
         tax_rate, created = NEW_TaxRate.objects.get_or_create(
@@ -203,8 +199,6 @@ def NEW_create_default_tax_rates():
                 'is_active': True
             }
         )
-        if created:
-            print(f"Created tax rate for {state.name}: {rate_value * 100:.2f}%")
     
     # Create some city-specific rates
     city_rates = {
@@ -225,8 +219,6 @@ def NEW_create_default_tax_rates():
                 name=city_name,
                 state=state
             )
-            if created:
-                print(f"Created city: {city.name}")
             
             # Create city-level tax rate
             tax_rate, created = NEW_TaxRate.objects.get_or_create(
@@ -240,9 +232,7 @@ def NEW_create_default_tax_rates():
                     'is_active': True
                 }
             )
-            if created:
-                print(f"Created tax rate for {city.name}, {state.name}: {rate_value * 100:.2f}%")
         except State.DoesNotExist:
-            print(f"State {state_name} not found, skipping city {city_name}")
+            pass
 
 # Hardcoded tax rates removed - all tax rates should be added through admin panel

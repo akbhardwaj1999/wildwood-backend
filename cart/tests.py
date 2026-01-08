@@ -513,8 +513,6 @@ class CouponTestCase(TestCase):
         
         data = {'code': 'TEST10'}
         response = self.client.post(self.apply_coupon_url, data, format='json')
-        if response.status_code != status.HTTP_200_OK:
-            print(f"Error response: {response.data}")  # Debug output
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('message', response.data)
         self.assertIn('coupon_discount_amount', response.data)
@@ -561,8 +559,6 @@ class CouponTestCase(TestCase):
         session.save()
         
         response = self.client.delete(self.remove_coupon_url)
-        if response.status_code != status.HTTP_200_OK:
-            print(f"Error response: {response.data}")  # Debug output
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('message', response.data)
         

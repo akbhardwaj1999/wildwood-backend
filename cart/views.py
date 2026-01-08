@@ -807,6 +807,17 @@ class ApplyCouponView(View):
             coupon = Coupon.objects.get(code=code, active=True)
         except Coupon.DoesNotExist:
             return JsonResponse({"error": "Coupon code in invalid."})
+        # IMPORTANT: Check if coupon is created for specific user
+        if coupon.created_for_user:
+            # This coupon is user-specific
+            if request.user.is_anonymous():
+                return JsonResponse({"error": "Please login to use this coupon."})
+            
+            # Only the user for whom coupon was created can use it
+            if coupon.created_for_user != request.user:
+                return JsonResponse({"error": "This coupon is not valid for your account."})
+        
+        # Check single use per user
         if coupon.single_use_per_user:
             if request.user.is_anonymous():
                 return JsonResponse({"error": "Please login to apply for this coupon."})
