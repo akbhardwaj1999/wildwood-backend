@@ -144,6 +144,33 @@ def send_abandoned_cart_emails():
                 frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
                 cart_recovery_url = f"{frontend_url}/cart/recover/{order.reference_number}"
                 
+                # Create coupon if discount_code is provided (for 3rd email)
+                discount_code = reminder['discount_code']
+                if discount_code:
+                    from .models import Coupon
+                    from decimal import Decimal
+                    
+                    # Get or create the abandoned cart coupon
+                    coupon, created = Coupon.objects.get_or_create(
+                        code=discount_code,
+                        defaults={
+                            'title': 'Abandoned Cart Recovery Discount',
+                            'description': '10% off on your abandoned cart items!',
+                            'discount': Decimal('10.00'),
+                            'discount_type': Coupon.DiscountType.PERCENTAGE,
+                            'minimum_order_amount': Decimal('0.00'),
+                            'single_use_per_user': False,  # Can be used by multiple users
+                            'active': True,
+                        }
+                    )
+                    
+                    # Ensure coupon is active
+                    if not coupon.active:
+                        coupon.active = True
+                        coupon.save(update_fields=['active'])
+                    
+                    logger.info(f"🎟️  Coupon '{discount_code}' {'created' if created else 'found'} for abandoned cart email")
+                
                 context = {
                     'user': order.user,
                     'first_name': order.user.first_name or 'Customer',
@@ -152,7 +179,7 @@ def send_abandoned_cart_emails():
                     'cart_count': len(cart_items),
                     'cart_url': cart_recovery_url,  # Use recovery link instead
                     'checkout_url': cart_recovery_url,  # Both go to recovery first
-                    'discount_code': reminder['discount_code'],
+                    'discount_code': discount_code,
                     'reminder_number': reminder['email_count'] + 1,
                 }
                 

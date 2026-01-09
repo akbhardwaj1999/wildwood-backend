@@ -62,11 +62,14 @@ class UserRegistrationView(generics.CreateAPIView):
         refresh = RefreshToken.for_user(user)
         
         # Create unique coupon code for this user
+        # Format: W20{user_id}{random} - shorter format (e.g., W2014ABC123)
         import secrets
         from decimal import Decimal
         from cart.models import Coupon
         
-        coupon_code = f"WELCOME20_{user.id}_{secrets.token_urlsafe(6).upper()}"
+        # Generate shorter coupon code: W20 + user_id + 6 char random
+        random_part = secrets.token_urlsafe(4).upper().replace('-', '').replace('_', '')[:6]
+        coupon_code = f"W20{user.id}{random_part}"
         
         # Create 20% discount coupon for this user
         try:

@@ -244,4 +244,4 @@ class UpdateCartItemSerializer(serializers.Serializer):
 
 class ApplyCouponSerializer(serializers.Serializer):
     """Serializer for applying coupon"""
-    code = serializers.CharField(max_length=20)
+    code = serializers.CharField(max_length=50)  # Increased to match model (for welcome coupons)
