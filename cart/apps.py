@@ -6,9 +6,11 @@ class CartConfig(AppConfig):
     
     def ready(self):
         """
-        Start the APScheduler when Django is ready
-        This will run the abandoned cart email checker every 2 minutes (testing mode)
-        Works for both development (runserver) and production (WSGI/PythonAnywhere)
+        Start the APScheduler when Django is ready (ONLY for development)
+        For production (PythonAnywhere), use scheduled task instead:
+        - Go to PythonAnywhere → Tasks tab
+        - Add: python /home/username/wildwood-backend/manage.py send_abandoned_cart_emails
+        - Set to run every 2 minutes (or desired interval)
         """
         import os
         import sys
@@ -17,18 +19,16 @@ class CartConfig(AppConfig):
         if any(command in sys.argv for command in ['migrate', 'makemigrations', 'shell', 'test', 'collectstatic']):
             return
         
-        # For development (runserver): Only start in reloader process
+        # ONLY start scheduler in development (runserver mode)
+        # For production (WSGI/PythonAnywhere), use scheduled task instead
         if 'runserver' in sys.argv:
-            if os.environ.get('RUN_MAIN') != 'true':
-                return
-        
-        # For production (WSGI/PythonAnywhere): Start scheduler
-        # Use a flag to prevent multiple starts
-        if not hasattr(self, '_scheduler_started'):
-            from .scheduler import start_scheduler
-            try:
-                start_scheduler()
-                self._scheduler_started = True
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
+            # For Windows: RUN_MAIN is set after first reload
+            # Start scheduler only in the reloader process (not the initial process)
+            if os.environ.get('RUN_MAIN') == 'true':
+                from .scheduler import start_scheduler
+                try:
+                    start_scheduler()
+                    self._scheduler_started = True
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
