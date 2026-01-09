@@ -8,21 +8,27 @@ class CartConfig(AppConfig):
         """
         Start the APScheduler when Django is ready
         This will run the abandoned cart email checker every 2 minutes (testing mode)
+        Works for both development (runserver) and production (WSGI/PythonAnywhere)
         """
         import os
         import sys
         
-        # Only start scheduler once when server starts
-        # Skip during migrations, shell, etc.
-        if 'runserver' not in sys.argv:
+        # Skip during migrations, shell, test commands, etc.
+        if any(command in sys.argv for command in ['migrate', 'makemigrations', 'shell', 'test', 'collectstatic']):
             return
         
-        # For Windows: RUN_MAIN is set after first reload
-        # Start scheduler only in the reloader process (not the initial process)
-        if os.environ.get('RUN_MAIN') == 'true':
+        # For development (runserver): Only start in reloader process
+        if 'runserver' in sys.argv:
+            if os.environ.get('RUN_MAIN') != 'true':
+                return
+        
+        # For production (WSGI/PythonAnywhere): Start scheduler
+        # Use a flag to prevent multiple starts
+        if not hasattr(self, '_scheduler_started'):
             from .scheduler import start_scheduler
             try:
                 start_scheduler()
+                self._scheduler_started = True
             except Exception as e:
                 import traceback
                 traceback.print_exc()
