@@ -1,6 +1,5 @@
 """
 Management command to send abandoned cart emails
-This can be run via cron job or scheduled task on PythonAnywhere
 Usage: python manage.py send_abandoned_cart_emails
 """
 
@@ -12,7 +11,6 @@ class Command(BaseCommand):
     help = 'Send abandoned cart reminder emails to users'
 
     def handle(self, *args, **options):
-        self.stdout.write('Starting abandoned cart email check...')
         try:
             emails_sent = send_abandoned_cart_emails()
             self.stdout.write(
@@ -22,7 +20,7 @@ class Command(BaseCommand):
             )
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f'Error sending abandoned cart emails: {e}')
+                self.style.ERROR(f'Error: {e}')
             )
             import traceback
             traceback.print_exc()
