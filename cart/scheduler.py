@@ -22,7 +22,10 @@ def send_abandoned_cart_emails():
     """
     from .models import Order
     
+    logger.info("=" * 60)
     logger.info("🔍 Starting abandoned cart email check...")
+    logger.info(f"Current time: {timezone.now()}")
+    logger.info("=" * 60)
     
     # Define time thresholds for different reminder emails
     # TESTING MODE: Using minutes instead of hours for quick testing
@@ -278,7 +281,10 @@ def send_abandoned_cart_emails():
                 traceback.print_exc()
                 continue
     
+    logger.info("=" * 60)
     logger.info(f"✨ Abandoned cart email check complete. Sent {total_emails_sent} emails.")
+    logger.info(f"End time: {timezone.now()}")
+    logger.info("=" * 60)
     return total_emails_sent
 
 
