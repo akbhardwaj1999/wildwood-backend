@@ -86,7 +86,7 @@ def send_abandoned_cart_emails():
         ).order_by('-last_updated')  # Most recently updated cart first
         
         order_count = abandoned_orders.count()
-        logger.info(f"📧 Found {order_count} abandoned carts for reminder #{reminder['email_count'] + 1}")
+        logger.info(f"📧 Found {order_count} abandoned carts for reminder #{reminder['email_count'] + 1} (created before {time_ago}, email_count={reminder['email_count']})")
         
         # Group orders by user and only send email for the MOST RECENT cart per user
         # This prevents sending emails for old abandoned carts when user has a new active cart
